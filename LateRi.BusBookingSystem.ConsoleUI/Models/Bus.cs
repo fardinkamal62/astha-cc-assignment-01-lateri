@@ -1,34 +1,45 @@
 namespace LateRi.BusBookingSystem.ConsoleUI.Models;
 
-public enum BusClassification
+using Enums;
+
+public class Bus : BaseEntity
 {
-    Business,
-    Economy
-}
+    public string BusId => Id;
+    public string CoachNumber { get; private set; }
+    public BusClassification Classification { get; private set; }
+    public int TotalSeats => (int)Classification;
 
-public class Bus
-{
-    private static int _nextId = 1;
+    private readonly HashSet<string> _reservedSeats = new();
 
-    private static readonly Dictionary<BusClassification, int> CapacityMap = new()
-    {
-        { BusClassification.Business, 20 },
-        { BusClassification.Economy, 40 }
-    };
-
-    public int Id { get; }
-    public string CoachNumber { get; }
-    public BusClassification Classification { get; }
-    public int TotalSeats { get; }
+    public IReadOnlyCollection<string> ReservedSeats => _reservedSeats;
 
     public Bus(string coachNumber, BusClassification classification)
     {
-        Id = _nextId++;
         CoachNumber = coachNumber;
         Classification = classification;
-        TotalSeats = CapacityMap[classification];
     }
 
-    public override string ToString() =>
-        $"[{Id}] Coach {CoachNumber} | {Classification} ({TotalSeats} seats)";
+    public bool IsSeatAvailable(string seatNumber) =>
+        !_reservedSeats.Contains(seatNumber);
+
+    public bool ReserveSeat(string seatNumber)
+    {
+        if (!IsSeatAvailable(seatNumber)) return false;
+        _reservedSeats.Add(seatNumber);
+        return true;
+    }
+
+    public List<string> GetAvailableSeats()
+    {
+        var all = Enumerable.Range(1, TotalSeats)
+            .Select(i => $"S{i:D2}")
+            .ToList();
+        return all.Where(s => !_reservedSeats.Contains(s)).ToList();
+    }
+
+    public override string GetSummary() =>
+        $"[{BusId}] Coach: {CoachNumber} | Class: {Classification} | " +
+        $"Seats: {TotalSeats - _reservedSeats.Count}/{TotalSeats} available";
+
+    public override string ToString() => GetSummary();
 }

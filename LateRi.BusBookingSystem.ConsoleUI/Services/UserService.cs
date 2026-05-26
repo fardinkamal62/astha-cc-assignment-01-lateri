@@ -15,5 +15,5 @@ public class UserService
 
     public List<User> GetAll() => [.. _users];
 
-    public User? GetById(int id) => _users.FirstOrDefault(u => u.Id == id);
+    public User? GetById(string id) => _users.FirstOrDefault(u => u.Id == id);
 }

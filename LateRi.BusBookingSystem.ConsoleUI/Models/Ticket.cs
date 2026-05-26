@@ -1,24 +1,28 @@
 namespace LateRi.BusBookingSystem.ConsoleUI.Models;
 
-public class Ticket
+public class Ticket : BaseEntity
 {
-    private static int _nextId = 1;
+    public string TicketId => Id;
+    public string UserId { get; private set; }
+    public string ScheduleId { get; private set; }
+    public string BusId { get; private set; }
+    public string SeatNumber { get; private set; }
+    public decimal Price { get; private set; }
+    public DateTime BookingDateTime { get; private set; }
 
-    public int Id { get; }
-    public int UserId { get; }
-    public int ScheduleId { get; }
-    public int SeatNumber { get; }
-    public DateTime BookedAt { get; }
-
-    public Ticket(int userId, int scheduleId, int seatNumber)
+    public Ticket(string userId, string scheduleId, string busId, string seatNumber, decimal price)
     {
-        Id = _nextId++;
         UserId = userId;
         ScheduleId = scheduleId;
+        BusId = busId;
         SeatNumber = seatNumber;
-        BookedAt = DateTime.Now;
+        Price = price;
+        BookingDateTime = DateTime.Now;
     }
 
-    public override string ToString() =>
-        $"[{Id}] User #{UserId} | Schedule #{ScheduleId} | Seat {SeatNumber} | {BookedAt:g}";
+    public override string GetSummary() =>
+        $"[{TicketId}] Seat: {SeatNumber} | Schedule: {ScheduleId} | " +
+        $"BDT {Price:F2} | Booked: {BookingDateTime:dd MMM yyyy}";
+
+    public override string ToString() => GetSummary();
 }

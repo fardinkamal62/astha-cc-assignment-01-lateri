@@ -1,3 +1,4 @@
+using LateRi.BusBookingSystem.ConsoleUI.Enums;
 using LateRi.BusBookingSystem.ConsoleUI.Models;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.Services;
@@ -15,5 +16,5 @@ public class BusService
 
     public List<Bus> GetAll() => [.. _buses];
 
-    public Bus? GetById(int id) => _buses.FirstOrDefault(b => b.Id == id);
+    public Bus? GetById(string id) => _buses.FirstOrDefault(b => b.Id == id);
 }

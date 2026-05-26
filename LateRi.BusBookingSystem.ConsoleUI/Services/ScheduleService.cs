@@ -6,7 +6,7 @@ public class ScheduleService
 {
     private readonly List<Schedule> _schedules = [];
 
-    public Schedule Create(int busId, string from, string to, DateTime departure, decimal price)
+    public Schedule Create(string busId, string from, string to, DateTime departure, decimal price)
     {
         var schedule = new Schedule(busId, from, to, departure, price);
         _schedules.Add(schedule);
@@ -15,5 +15,5 @@ public class ScheduleService
 
     public List<Schedule> GetAll() => [.. _schedules];
 
-    public Schedule? GetById(int id) => _schedules.FirstOrDefault(s => s.Id == id);
+    public Schedule? GetById(string id) => _schedules.FirstOrDefault(s => s.Id == id);
 }

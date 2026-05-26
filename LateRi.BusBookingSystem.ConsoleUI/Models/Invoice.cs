@@ -1,27 +1,35 @@
+using LateRi.BusBookingSystem.ConsoleUI.Enums;
+
 namespace LateRi.BusBookingSystem.ConsoleUI.Models;
 
-public class Invoice
+public class Invoice : BaseEntity
 {
-    private static int _nextId = 1;
+    public string InvoiceId => Id;
+    public string TicketId { get; private set; }
+    public string UserId { get; private set; }
+    public decimal AmountDue { get; private set; }
+    public DateTime GeneratedDate { get; private set; }
+    public PaymentStatus Status { get; private set; }
+    public bool IsPaid => Status == PaymentStatus.Paid;
 
-    public int Id { get; }
-    public int TicketId { get; }
-    public int UserId { get; }
-    public decimal Amount { get; }
-    public DateTime IssuedAt { get; }
-    public bool IsPaid { get; private set; }
-
-    public Invoice(int ticketId, int userId, decimal amount)
+    public Invoice(string ticketId, string userId, decimal amountDue)
     {
-        Id = _nextId++;
         TicketId = ticketId;
         UserId = userId;
-        Amount = amount;
-        IssuedAt = DateTime.Now;
+        AmountDue = amountDue;
+        GeneratedDate = DateTime.Now;
+        Status = PaymentStatus.Pending;
     }
 
-    public void MarkPaid() => IsPaid = true;
+    private void MarkAsPaid() => Status = PaymentStatus.Paid;
+    private void MarkAsCancelled() => Status = PaymentStatus.Cancelled;
 
-    public override string ToString() =>
-        $"[{Id}] User #{UserId} | Ticket #{TicketId} | ${Amount:F2} | {(IsPaid ? "PAID" : "UNPAID")} | {IssuedAt:d}";
+    public void MarkPaid() => MarkAsPaid();
+    public void MarkCancelled() => MarkAsCancelled();
+
+    public override string GetSummary() =>
+        $"[{InvoiceId}] Ticket: {TicketId} | BDT {AmountDue:F2} | " +
+        $"Status: {Status} | Date: {GeneratedDate:dd MMM yyyy}";
+
+    public override string ToString() => GetSummary();
 }

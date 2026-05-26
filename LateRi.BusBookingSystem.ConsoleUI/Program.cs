@@ -1,4 +1,5 @@
-﻿using LateRi.BusBookingSystem.ConsoleUI.Models;
+using LateRi.BusBookingSystem.ConsoleUI.Enums;
+using LateRi.BusBookingSystem.ConsoleUI.Models;
 using LateRi.BusBookingSystem.ConsoleUI.Services;
 
 var userService = new UserService();
@@ -65,7 +66,7 @@ void CreateUser()
     var email = Console.ReadLine()!;
 
     var user = userService.Create(name, mobile, email);
-    Console.WriteLine($"User created: {user}");
+    Console.WriteLine($"User created: {UserLabel(user)}");
     Pause();
 }
 
@@ -80,7 +81,7 @@ void DisplayAllUsers()
     if (users.Count == 0)
         Console.WriteLine("No users registered.");
     else
-        users.ForEach(u => Console.WriteLine(u));
+        PrintList(users, UserLabel);
     Pause();
 }
 
@@ -98,7 +99,7 @@ void CreateBus()
     var classification = clsInput == "1" ? BusClassification.Business : BusClassification.Economy;
 
     var bus = busService.Create(coach, classification);
-    Console.WriteLine($"Bus created: {bus}");
+    Console.WriteLine($"Bus created: {BusLabel(bus)}");
     Pause();
 }
 
@@ -113,7 +114,7 @@ void DisplayAllBuses()
     if (buses.Count == 0)
         Console.WriteLine("No buses in fleet.");
     else
-        buses.ForEach(b => Console.WriteLine(b));
+        PrintList(buses, BusLabel);
     Pause();
 }
 
@@ -134,11 +135,10 @@ void CreateSchedule()
     }
 
     Console.WriteLine("Available buses:");
-    buses.ForEach(b => Console.WriteLine($"  {b}"));
-    Console.Write("Bus ID : ");
-    if (!int.TryParse(Console.ReadLine(), out var busId) || busService.GetById(busId) == null)
+    var selectedBus = SelectFromList(buses, BusLabel, "Select bus number: ");
+    if (selectedBus == null)
     {
-        Console.WriteLine("Invalid Bus ID.");
+        Console.WriteLine("Invalid selection.");
         Pause();
         return;
     }
@@ -162,8 +162,8 @@ void CreateSchedule()
         return;
     }
 
-    var schedule = scheduleService.Create(busId, from, to, departure, price);
-    Console.WriteLine($"Schedule created: {schedule}");
+    var schedule = scheduleService.Create(selectedBus.BusId, from, to, departure, price);
+    Console.WriteLine($"Schedule created: {ScheduleLabel(schedule)}");
     Pause();
 }
 
@@ -178,7 +178,7 @@ void DisplayAllSchedules()
     if (schedules.Count == 0)
         Console.WriteLine("No schedules.");
     else
-        schedules.ForEach(s => Console.WriteLine(s));
+        PrintList(schedules, ScheduleLabel);
     Pause();
 }
 
@@ -189,26 +189,29 @@ void DisplayScheduleDetails()
 {
     Console.Clear();
     Console.WriteLine("--- SCHEDULE DETAILS ---");
-    Console.Write("Schedule ID : ");
-    if (!int.TryParse(Console.ReadLine(), out var scheduleId))
+
+    var schedules = scheduleService.GetAll();
+    if (schedules.Count == 0)
     {
-        Console.WriteLine("Invalid ID.");
+        Console.WriteLine("No schedules.");
         Pause();
         return;
     }
 
-    var schedule = scheduleService.GetById(scheduleId);
+    var schedule = SelectFromList(schedules, ScheduleLabel, "Select schedule number: ");
     if (schedule == null)
     {
-        Console.WriteLine("Schedule not found.");
+        Console.WriteLine("Invalid selection.");
         Pause();
         return;
     }
 
     var bus = busService.GetById(schedule.BusId);
-    Console.WriteLine(schedule);
-    Console.WriteLine($"Bus: {bus}");
-    Console.WriteLine($"Available seats: {bookingService.GetAvailableSeats(scheduleId, bus!.TotalSeats).Count}/{bus.TotalSeats}");
+    Console.WriteLine(ScheduleLabel(schedule));
+    if (bus != null)
+        Console.WriteLine($"Bus: {BusLabel(bus)}");
+    if (bus != null)
+        Console.WriteLine($"Available seats: {bookingService.GetAvailableSeats(schedule.ScheduleId, bus.TotalSeats).Count}/{bus.TotalSeats}");
     Pause();
 }
 
@@ -227,35 +230,32 @@ void BookTicket()
     if (schedules.Count == 0) { Console.WriteLine("No schedules. Create a schedule first."); Pause(); return; }
 
     Console.WriteLine("Users:");
-    users.ForEach(u => Console.WriteLine($"  {u}"));
-    Console.Write("User ID : ");
-    if (!int.TryParse(Console.ReadLine(), out var userId) || userService.GetById(userId) == null)
+    var user = SelectFromList(users, UserLabel, "Select user number: ");
+    if (user == null)
     {
-        Console.WriteLine("Invalid User ID.");
+        Console.WriteLine("Invalid selection.");
         Pause();
         return;
     }
 
     Console.WriteLine("\nSchedules:");
-    schedules.ForEach(s => Console.WriteLine($"  {s}"));
-    Console.Write("Schedule ID : ");
-    if (!int.TryParse(Console.ReadLine(), out var scheduleId))
-    {
-        Console.WriteLine("Invalid Schedule ID.");
-        Pause();
-        return;
-    }
-
-    var schedule = scheduleService.GetById(scheduleId);
+    var schedule = SelectFromList(schedules, ScheduleLabel, "Select schedule number: ");
     if (schedule == null)
     {
-        Console.WriteLine("Schedule not found.");
+        Console.WriteLine("Invalid selection.");
         Pause();
         return;
     }
 
     var bus = busService.GetById(schedule.BusId);
-    var available = bookingService.GetAvailableSeats(scheduleId, bus!.TotalSeats);
+    if (bus == null)
+    {
+        Console.WriteLine("Bus not found for this schedule.");
+        Pause();
+        return;
+    }
+
+    var available = bookingService.GetAvailableSeats(schedule.ScheduleId, bus.TotalSeats);
 
     Console.WriteLine($"\nAvailable seats ({available.Count}/{bus.TotalSeats}): {string.Join(", ", available)}");
     Console.Write("Choose a seat : ");
@@ -268,10 +268,10 @@ void BookTicket()
 
     try
     {
-        var ticket = bookingService.Book(userId, scheduleId, seat, bus.TotalSeats);
-        var invoice = invoiceService.Create(ticket.Id, userId, schedule.Price);
-        Console.WriteLine($"Ticket booked: {ticket}");
-        Console.WriteLine($"Invoice generated: {invoice}");
+        var ticket = bookingService.Book(user.UserId, schedule.ScheduleId, seat.ToString(), bus.TotalSeats, schedule.BusId, schedule.TicketPrice);
+        var invoice = invoiceService.Create(ticket.TicketId, user.UserId, ticket.Price);
+        Console.WriteLine($"Ticket booked: {TicketLabel(ticket)}");
+        Console.WriteLine($"Invoice generated: {InvoiceLabel(invoice)}");
     }
     catch (Exception ex)
     {
@@ -288,19 +288,27 @@ void DisplayUserInvoices()
 {
     Console.Clear();
     Console.WriteLine("--- USER INVOICES ---");
-    Console.Write("User ID : ");
-    if (!int.TryParse(Console.ReadLine(), out var userId))
+    var users = userService.GetAll();
+    if (users.Count == 0)
     {
-        Console.WriteLine("Invalid User ID.");
+        Console.WriteLine("No users registered.");
         Pause();
         return;
     }
 
-    var invoices = invoiceService.GetByUser(userId);
+    var user = SelectFromList(users, UserLabel, "Select user number: ");
+    if (user == null)
+    {
+        Console.WriteLine("Invalid selection.");
+        Pause();
+        return;
+    }
+
+    var invoices = invoiceService.GetByUser(user.UserId);
     if (invoices.Count == 0)
         Console.WriteLine("No invoices for this user.");
     else
-        invoices.ForEach(i => Console.WriteLine(i));
+        PrintList(invoices, InvoiceLabel);
 
     Pause();
 }
@@ -312,15 +320,23 @@ void ProcessInvoicePayment()
 {
     Console.Clear();
     Console.WriteLine("--- PROCESS PAYMENT ---");
-    Console.Write("User ID : ");
-    if (!int.TryParse(Console.ReadLine(), out var userId))
+    var users = userService.GetAll();
+    if (users.Count == 0)
     {
-        Console.WriteLine("Invalid User ID.");
+        Console.WriteLine("No users registered.");
         Pause();
         return;
     }
 
-    var unpaid = invoiceService.GetUnpaidByUser(userId);
+    var user = SelectFromList(users, UserLabel, "Select user number: ");
+    if (user == null)
+    {
+        Console.WriteLine("Invalid selection.");
+        Pause();
+        return;
+    }
+
+    var unpaid = invoiceService.GetUnpaidByUser(user.UserId);
     if (unpaid.Count == 0)
     {
         Console.WriteLine("No unpaid invoices for this user.");
@@ -329,16 +345,15 @@ void ProcessInvoicePayment()
     }
 
     Console.WriteLine("Unpaid invoices:");
-    unpaid.ForEach(i => Console.WriteLine($"  {i}"));
-    Console.Write("Invoice ID to pay : ");
-    if (!int.TryParse(Console.ReadLine(), out var invoiceId))
+    var invoice = SelectFromList(unpaid, InvoiceLabel, "Select invoice number: ");
+    if (invoice == null)
     {
-        Console.WriteLine("Invalid Invoice ID.");
+        Console.WriteLine("Invalid selection.");
         Pause();
         return;
     }
 
-    if (invoiceService.Pay(invoiceId))
+    if (invoiceService.Pay(invoice.Id))
         Console.WriteLine("Payment successful.");
     else
         Console.WriteLine("Payment failed. Check the Invoice ID.");
@@ -353,19 +368,27 @@ void DisplayUserTickets()
 {
     Console.Clear();
     Console.WriteLine("--- USER TICKETS ---");
-    Console.Write("User ID : ");
-    if (!int.TryParse(Console.ReadLine(), out var userId))
+    var users = userService.GetAll();
+    if (users.Count == 0)
     {
-        Console.WriteLine("Invalid User ID.");
+        Console.WriteLine("No users registered.");
         Pause();
         return;
     }
 
-    var tickets = bookingService.GetByUser(userId);
+    var user = SelectFromList(users, UserLabel, "Select user number: ");
+    if (user == null)
+    {
+        Console.WriteLine("Invalid selection.");
+        Pause();
+        return;
+    }
+
+    var tickets = bookingService.GetByUser(user.UserId);
     if (tickets.Count == 0)
         Console.WriteLine("No tickets for this user.");
     else
-        tickets.ForEach(t => Console.WriteLine(t));
+        PrintList(tickets, TicketLabel);
 
     Pause();
 }
@@ -378,3 +401,37 @@ void Pause()
     Console.WriteLine("\nPress any key to continue...");
     Console.ReadKey();
 }
+
+static void PrintList<T>(IReadOnlyList<T> items, Func<T, string> label)
+{
+    for (var i = 0; i < items.Count; i++)
+        Console.WriteLine($"{i + 1}. {label(items[i])}");
+}
+
+static T? SelectFromList<T>(IReadOnlyList<T> items, Func<T, string> label, string prompt)
+    where T : class
+{
+    if (items.Count == 0) return null;
+    PrintList(items, label);
+    Console.Write(prompt);
+    if (!int.TryParse(Console.ReadLine(), out var choice)) return null;
+    if (choice < 1 || choice > items.Count) return null;
+    return items[choice - 1];
+}
+
+static string UserLabel(User user) =>
+    $"{user.Name} | {user.Mobile} | {user.Email}";
+
+static string BusLabel(Bus bus) =>
+    $"Coach: {bus.CoachNumber} | Class: {bus.Classification} | " +
+    $"Seats: {bus.TotalSeats - bus.ReservedSeats.Count}/{bus.TotalSeats} available";
+
+static string ScheduleLabel(Schedule schedule) =>
+    $"{schedule.DepartureCity} -> {schedule.ArrivalCity} | " +
+    $"{schedule.DepartureDateTime:dd MMM yyyy HH:mm} | BDT {schedule.TicketPrice:F2}";
+
+static string TicketLabel(Ticket ticket) =>
+    $"Seat {ticket.SeatNumber} | BDT {ticket.Price:F2} | Booked {ticket.BookingDateTime:dd MMM yyyy}";
+
+static string InvoiceLabel(Invoice invoice) =>
+    $"BDT {invoice.AmountDue:F2} | {invoice.Status} | {invoice.GeneratedDate:dd MMM yyyy}";
