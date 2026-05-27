@@ -5,8 +5,8 @@ using LateRi.BusBookingSystem.ConsoleUI.Services;
 var userService = new UserService();
 var busService = new BusService();
 var scheduleService = new ScheduleService();
-var bookingService = new BookingService();
 var invoiceService = new InvoiceService();
+var bookingService = new BookingService(userService, busService, scheduleService, invoiceService);
 
 SeedData();
 
@@ -213,7 +213,7 @@ void DisplayScheduleDetails()
     if (bus != null)
         Console.WriteLine($"Bus: {BusLabel(bus)}");
     if (bus != null)
-        Console.WriteLine($"Available seats: {bookingService.GetAvailableSeats(schedule.ScheduleId, bus.TotalSeats).Count}/{bus.TotalSeats}");
+        Console.WriteLine($"Available seats: {bookingService.GetAvailableSeats(schedule.ScheduleId).Count}/{bus.TotalSeats}");
     Pause();
 }
 
@@ -257,10 +257,10 @@ void BookTicket()
         return;
     }
 
-    var available = bookingService.GetAvailableSeats(schedule.ScheduleId, bus.TotalSeats);
+    var available = bookingService.GetAvailableSeats(schedule.ScheduleId);
 
     Console.WriteLine($"\nAvailable seats ({available.Count}/{bus.TotalSeats}): {string.Join(", ", available)}");
-    Console.Write("Choose a seat : ");
+    Console.Write($"Choose a seat number (1–{bus.TotalSeats}) : ");
     if (!int.TryParse(Console.ReadLine(), out var seat))
     {
         Console.WriteLine("Invalid seat number.");
@@ -268,16 +268,16 @@ void BookTicket()
         return;
     }
 
-    try
+    var result = bookingService.Book(user.UserId, schedule.ScheduleId, seat);
+    if (result.Success)
     {
-        var ticket = bookingService.Book(user.UserId, schedule.ScheduleId, seat.ToString(), bus.TotalSeats, schedule.BusId, schedule.TicketPrice);
-        var invoice = invoiceService.Create(ticket.TicketId, user.UserId, ticket.Price);
-        Console.WriteLine($"Ticket booked: {TicketLabel(ticket)}");
-        Console.WriteLine($"Invoice generated: {InvoiceLabel(invoice)}");
+        Console.WriteLine(result.Message);
+        Console.WriteLine($"Ticket booked: {TicketLabel(result.Ticket!)}");
+        Console.WriteLine("Invoice auto-generated.");
     }
-    catch (Exception ex)
+    else
     {
-        Console.WriteLine($"Error: {ex.Message}");
+        Console.WriteLine($"Error: {result.Message}");
     }
 
     Pause();
@@ -406,12 +406,12 @@ void Pause()
 
 void SeedData()
 {
-    var user1 = userService.Create("Fardin Kamal", "01711000001", "fardin@kamal.com");
-    var user2 = userService.Create("Abdullah Rayed", "01811000001", "rayed@ait.com");
-    var user3 = userService.Create("Rahat Khan Pathan", "01912000002", "rahat@ait.com");
+    userService.Create("Fardin Kamal", "01711000001", "fardin@kamal.com");
+    userService.Create("Abdullah Rayed", "01811000001", "rayed@ait.com");
+    userService.Create("Rahat Khan Pathan", "01912000002", "rahat@ait.com");
 
     var bus1 = busService.Create("Shohagh Prestige", BusClassification.Business);
-    var bus2 = busService.Create("Shyamoli NR Travels", BusClassification.Business);
+    var bus2 = busService.Create("Shyamoli NR Travels", BusClassification.Economy);
 
     scheduleService.Create(bus1.BusId, "Dhaka", "Chittagong", DateTime.Today.AddHours(10), 650m);
     scheduleService.Create(bus1.BusId, "Dhaka", "Sylhet", DateTime.Today.AddHours(15), 700m);

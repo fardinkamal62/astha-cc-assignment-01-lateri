@@ -5,38 +5,60 @@ namespace LateRi.BusBookingSystem.ConsoleUI.Services;
 public class BookingService
 {
     private readonly List<Ticket> _tickets = [];
+    private readonly UserService _userService;
+    private readonly BusService _busService;
+    private readonly ScheduleService _scheduleService;
+    private readonly InvoiceService _invoiceService;
 
-    public Ticket Book(string userId, string scheduleId, string seatNumber, int maxSeats, string busId, decimal price)
+    public BookingService(UserService userService, BusService busService,
+        ScheduleService scheduleService, InvoiceService invoiceService)
     {
-        if (string.IsNullOrWhiteSpace(seatNumber))
-            throw new ArgumentException("Seat number is required.", nameof(seatNumber));
+        _userService = userService;
+        _busService = busService;
+        _scheduleService = scheduleService;
+        _invoiceService = invoiceService;
+    }
 
-        if (!int.TryParse(seatNumber, out var seatIndex) || seatIndex < 1 || seatIndex > maxSeats)
-            throw new ArgumentOutOfRangeException(nameof(seatNumber), $"Seat number must be between 1 and {maxSeats}.");
+    public (bool Success, string Message, Ticket? Ticket) Book(
+        string userId, string scheduleId, int seatNumber)
+    {
+        var user = _userService.GetById(userId);
+        if (user == null) return (false, "User not found.", null);
 
-        seatNumber = seatIndex.ToString();
+        var schedule = _scheduleService.GetById(scheduleId);
+        if (schedule == null) return (false, "Schedule not found.", null);
 
-        if (_tickets.Any(t => t.ScheduleId == scheduleId && t.SeatNumber == seatNumber))
-            throw new InvalidOperationException($"Seat {seatNumber} is already booked for this schedule.");
+        var bus = _busService.GetById(schedule.BusId);
+        if (bus == null) return (false, "Bus not found.", null);
 
-        var ticket = new Ticket(userId, scheduleId, busId, seatNumber, price);
+        if (seatNumber < 1 || seatNumber > bus.TotalSeats)
+            return (false, $"Invalid seat. Must be between 1 and {bus.TotalSeats}.", null);
+
+        var seatCode = $"S{seatNumber:D2}";
+
+        if (!bus.IsSeatAvailable(seatCode))
+            return (false, $"Seat {seatCode} is already reserved.", null);
+
+        bus.ReserveSeat(seatCode);
+
+        var ticket = new Ticket(userId, scheduleId, bus.BusId, seatCode, schedule.TicketPrice);
         _tickets.Add(ticket);
-        return ticket;
+        user.AddTicket(ticket.TicketId);
+
+        _invoiceService.Create(ticket.TicketId, userId, ticket.Price);
+
+        return (true, "Booking successful!", ticket);
     }
 
     public List<Ticket> GetByUser(string userId) =>
         _tickets.Where(t => t.UserId == userId).ToList();
 
-    public List<string> GetTakenSeats(string scheduleId) =>
-        _tickets.Where(t => t.ScheduleId == scheduleId).Select(t => t.SeatNumber).ToList();
-
-    public List<string> GetAvailableSeats(string scheduleId, int maxSeats)
+    public List<string> GetAvailableSeats(string scheduleId)
     {
-        var taken = GetTakenSeats(scheduleId);
-        return Enumerable.Range(1, maxSeats)
-            .Select(s => s.ToString())
-            .Where(s => !taken.Contains(s))
-            .ToList();
+        var schedule = _scheduleService.GetById(scheduleId);
+        if (schedule == null) return [];
+        var bus = _busService.GetById(schedule.BusId);
+        return bus?.GetAvailableSeats() ?? [];
     }
 
     public Ticket? GetById(string id) => _tickets.FirstOrDefault(t => t.Id == id);
