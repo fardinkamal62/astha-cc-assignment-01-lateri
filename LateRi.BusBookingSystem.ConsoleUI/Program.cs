@@ -8,6 +8,8 @@ var scheduleService = new ScheduleService();
 var bookingService = new BookingService();
 var invoiceService = new InvoiceService();
 
+SeedData();
+
 while (true)
 {
     Console.Clear();
@@ -402,6 +404,20 @@ void Pause()
     Console.ReadKey();
 }
 
+void SeedData()
+{
+    var user1 = userService.Create("Fardin Kamal", "01711000001", "fardin@kamal.com");
+    var user2 = userService.Create("Abdullah Rayed", "01811000001", "rayed@ait.com");
+    var user3 = userService.Create("Rahat Khan Pathan", "01912000002", "rahat@ait.com");
+
+    var bus1 = busService.Create("Shohagh Prestige", BusClassification.Business);
+    var bus2 = busService.Create("Shyamoli NR Travels", BusClassification.Business);
+
+    scheduleService.Create(bus1.BusId, "Dhaka", "Chittagong", DateTime.Today.AddHours(10), 650m);
+    scheduleService.Create(bus1.BusId, "Dhaka", "Sylhet", DateTime.Today.AddHours(15), 700m);
+    scheduleService.Create(bus2.BusId, "Chittagong", "Cox's Bazar", DateTime.Today.AddDays(1).AddHours(9), 1200m);
+}
+
 static void PrintList<T>(IReadOnlyList<T> items, Func<T, string> label)
 {
     for (var i = 0; i < items.Count; i++)
@@ -424,7 +440,7 @@ static string UserLabel(User user) =>
 
 static string BusLabel(Bus bus) =>
     $"Coach: {bus.CoachNumber} | Class: {bus.Classification} | " +
-    $"Seats: {bus.TotalSeats - bus.ReservedSeats.Count}/{bus.TotalSeats} available";
+    $"Seats: {bus.TotalSeats}";
 
 static string ScheduleLabel(Schedule schedule) =>
     $"{schedule.DepartureCity} -> {schedule.ArrivalCity} | " +
