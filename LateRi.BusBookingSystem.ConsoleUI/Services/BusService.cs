@@ -8,6 +8,9 @@ public class BusService(IBusRepository iBusRepository)
 {
     public Bus Create(string coachNumber, BusClassification classification)
     {
+        if (string.IsNullOrWhiteSpace(coachNumber))
+            throw new ArgumentException("CoachNumber is required.");
+
         var bus = new Bus(coachNumber, classification);
         iBusRepository.Add(bus);
         return bus;
