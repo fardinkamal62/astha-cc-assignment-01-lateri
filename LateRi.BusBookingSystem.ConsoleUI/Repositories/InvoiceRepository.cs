@@ -11,7 +11,7 @@ public class InvoiceRepository : IInvoiceRepository
 
     public IReadOnlyList<Invoice> GetAll() => _store.Values.ToList();
 
-    public Invoice GetById(string userId) => _store.TryGetValue(userId, out var invoice) ? invoice : null;
+    public Invoice? GetById(string userId) => _store.TryGetValue(userId, out var invoice) ? invoice : null;
 
     public IReadOnlyList<Invoice> GetByUserId(string userId) => _store.Values.Where(i => i.UserId == userId).ToList();
 }

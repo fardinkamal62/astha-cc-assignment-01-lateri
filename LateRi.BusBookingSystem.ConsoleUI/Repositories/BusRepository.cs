@@ -11,5 +11,5 @@ public class BusRepository: IBusRepository
 
     public IReadOnlyList<Bus> GetAll() => _store.Values.ToList();
 
-    public Bus GetById(string userId) => _store.TryGetValue(userId, out var bus) ? bus : null;
+    public Bus? GetById(string userId) => _store.TryGetValue(userId, out var bus) ? bus : null;
 }

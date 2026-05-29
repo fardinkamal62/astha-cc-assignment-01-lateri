@@ -1,26 +1,26 @@
+using LateRi.BusBookingSystem.ConsoleUI.Interfaces;
 using LateRi.BusBookingSystem.ConsoleUI.Models;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.Services;
 
-public class InvoiceService
+public class InvoiceService(IInvoiceRepository invoiceRepository)
 {
-    private readonly List<Invoice> _invoices = [];
-
     public Invoice Create(string ticketId, string userId, decimal amount)
     {
         var invoice = new Invoice(ticketId, userId, amount);
-        _invoices.Add(invoice);
+        invoiceRepository.Add(invoice);
         return invoice;
     }
 
-    public List<Invoice> GetByUser(string userId) =>
-        _invoices.Where(i => i.UserId == userId).ToList();
+    public IReadOnlyList<Invoice> GetByUser(string userId) => invoiceRepository.GetByUserId(userId);
 
-    public List<Invoice> GetUnpaidByUser(string userId) =>
-        _invoices.Where(i => i.UserId == userId && !i.IsPaid).ToList();
+    public List<Invoice> GetUnpaidByUser(string userId)
+    {
+        var invoices = GetByUser(userId).ToList();
+        return invoices.Where(i => !i.IsPaid).ToList();
+    }
 
-    public Invoice? GetById(string id) =>
-        _invoices.FirstOrDefault(i => i.Id == id);
+    public Invoice? GetById(string id) => invoiceRepository.GetById(id);
 
     public bool Pay(string invoiceId)
     {

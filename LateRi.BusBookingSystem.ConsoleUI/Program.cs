@@ -1,12 +1,20 @@
 using LateRi.BusBookingSystem.ConsoleUI.Enums;
 using LateRi.BusBookingSystem.ConsoleUI.Models;
 using LateRi.BusBookingSystem.ConsoleUI.Services;
+using LateRi.BusBookingSystem.ConsoleUI.Repositories;
 
-var userService = new UserService();
-var busService = new BusService();
-var scheduleService = new ScheduleService();
-var invoiceService = new InvoiceService();
-var bookingService = new BookingService(userService, busService, scheduleService, invoiceService);
+
+var userRepo = new UserRepository();
+var busRepo = new BusRepository();
+var scheduleRepo = new ScheduleRepository();
+var ticketRepo = new TicketRepository();
+var invoiceRepo = new InvoiceRepository();
+
+var userService = new UserService(userRepo);
+var busService = new BusService(busRepo);
+var scheduleService = new ScheduleService(scheduleRepo);
+var invoiceService = new InvoiceService(invoiceRepo);
+var bookingService = new BookingService(busRepo, scheduleRepo, ticketRepo, userRepo, invoiceService);
 
 SeedData();
 
@@ -26,7 +34,7 @@ while (true)
     Console.WriteLine("9. Display User Invoices");
     Console.WriteLine("10. Process Invoice Payment");
     Console.WriteLine("11. Display User Tickets");
-    Console.WriteLine("0. Exit");
+    Console.WriteLine("0/q. Exit");
     Console.WriteLine();
     Console.Write("Choose an option: ");
 
@@ -46,6 +54,8 @@ while (true)
         case "10": ProcessInvoicePayment(); break;
         case "11": DisplayUserTickets(); break;
         case "0": return;
+        case "q": return;
+        case "Q": return;
         default:
             Console.WriteLine("Invalid option. Press any key to try again.");
             Console.ReadKey();

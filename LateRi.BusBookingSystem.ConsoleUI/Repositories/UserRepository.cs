@@ -11,5 +11,5 @@ public class UserRepository: IUserRepository
 
     public IReadOnlyList<User> GetAll() => _store.Values.ToList();
 
-    public User GetById(string userId) => _store.TryGetValue(userId, out var user) ? user : null;
+    public User? GetById(string userId) => _store.TryGetValue(userId, out var user) ? user : null;
 }
