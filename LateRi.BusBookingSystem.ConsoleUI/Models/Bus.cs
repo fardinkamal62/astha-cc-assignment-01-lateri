@@ -2,22 +2,16 @@ namespace LateRi.BusBookingSystem.ConsoleUI.Models;
 
 using Enums;
 
-public class Bus : BaseEntity
+public class Bus(string coachNumber, BusClassification classification): BaseEntity
 {
     public string BusId => Id;
-    public string CoachNumber { get; private set; }
-    public BusClassification Classification { get; private set; }
+    public string CoachNumber { get; private set; } = coachNumber;
+    public BusClassification Classification { get; private set; } = classification;
     public int TotalSeats => (int)Classification;
 
     private readonly HashSet<string> _reservedSeats = new();
 
     public IReadOnlyCollection<string> ReservedSeats => _reservedSeats;
-
-    public Bus(string coachNumber, BusClassification classification)
-    {
-        CoachNumber = coachNumber;
-        Classification = classification;
-    }
 
     public bool IsSeatAvailable(string seatNumber) =>
         !_reservedSeats.Contains(seatNumber);

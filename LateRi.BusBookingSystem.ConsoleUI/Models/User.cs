@@ -1,29 +1,14 @@
 namespace LateRi.BusBookingSystem.ConsoleUI.Models;
 
-public class User : BaseEntity
+public class User(string name, string mobile, string email) : BaseEntity
 {
     public string UserId => Id;
-    public string Name { get; private set; }
-    public string Mobile { get; private set; }
-    public string Email { get; private set; }
-
-    private readonly List<string> _ticketIds = new();
-
-    public IReadOnlyList<string> TicketIds => _ticketIds.AsReadOnly();
-
-    public User(string name, string mobile, string email)
-    {
-        Name = name;
-        Mobile = mobile;
-        Email = email;
-    }
-
-    public void AddTicket(string ticketId) => _ticketIds.Add(ticketId);
+    public string Name { get; } = name;
+    public string Mobile { get; } = mobile;
+    public string Email { get; } = email;
 
     public override string GetSummary() =>
         $"[{UserId}] {Name} | {Mobile} | {Email}";
 
     public override string ToString() => GetSummary();
-
-    public void RemoveTicket(string ticketId) => _ticketIds.Remove(ticketId);
 }

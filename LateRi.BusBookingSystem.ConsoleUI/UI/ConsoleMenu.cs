@@ -355,22 +355,7 @@ public class ConsoleMenu(
 
         if (choice == "Cancel")
         {
-            var ticket = bookingService.GetById(invoice.TicketId);
-            if (ticket == null)
-            {
-                Console.WriteLine("Ticket not found.");
-                Pause();
-                return;
-            }
-
-            if (!int.TryParse(ticket.SeatNumber[1..], out var seatNum))
-            {
-                Console.WriteLine("Invalid seat number on ticket.");
-                Pause();
-                return;
-            }
-
-            var result = bookingService.CancelBooking(user.UserId, ticket.ScheduleId, seatNum, invoice.Id);
+            var result = bookingService.CancelBooking(user.UserId, invoice.Id);
             Console.WriteLine(result.Message);
 
             Pause();

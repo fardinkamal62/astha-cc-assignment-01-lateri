@@ -3,12 +3,12 @@ namespace LateRi.BusBookingSystem.ConsoleUI.Models;
 public abstract class BaseEntity
 {
     public string Id { get; protected set; }
-    public DateTime CreatedAt { get; protected set; }
+    public DateTimeOffset CreatedAt { get; protected set; }
 
     protected BaseEntity()
     {
         Id = Guid.NewGuid().ToString("N")[..8].ToUpper();
-        CreatedAt = DateTime.Now;
+        CreatedAt = DateTimeOffset.UtcNow;
     }
 
     // Abstract method - forces all entities to define their display format

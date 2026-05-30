@@ -1,23 +1,14 @@
 namespace LateRi.BusBookingSystem.ConsoleUI.Models;
 
-public class Schedule : BaseEntity
+public class Schedule(string busId, string departureCity, string arrivalCity,
+    DateTime departureDateTime, decimal ticketPrice) : BaseEntity
 {
     public string ScheduleId => Id;
-    public string BusId { get; private set; }
-    public string DepartureCity { get; private set; }
-    public string ArrivalCity { get; private set; }
-    public DateTime DepartureDateTime { get; private set; }
-    public decimal TicketPrice { get; private set; }
-
-    public Schedule(string busId, string departureCity, string arrivalCity,
-        DateTime departureDateTime, decimal ticketPrice)
-    {
-        BusId = busId;
-        DepartureCity = departureCity;
-        ArrivalCity = arrivalCity;
-        DepartureDateTime = departureDateTime;
-        TicketPrice = ticketPrice;
-    }
+    public string BusId { get; private set; } = busId;
+    public string DepartureCity { get; private set; } = departureCity;
+    public string ArrivalCity { get; private set; } = arrivalCity;
+    public DateTime DepartureDateTime { get; private set; } = departureDateTime;
+    public decimal TicketPrice { get; private set; } = ticketPrice;
 
     public override string GetSummary() =>
         $"[{ScheduleId}] {DepartureCity} → {ArrivalCity} | " +

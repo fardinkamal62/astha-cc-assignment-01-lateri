@@ -34,7 +34,6 @@ public class BookingService(
 
         var ticket = new Ticket(userId, scheduleId, bus.BusId, seatCode, schedule.TicketPrice);
         ticketRepo.Add(ticket);
-        user.AddTicket(ticket.TicketId);
 
         invoiceService.Create(ticket.TicketId, userId, ticket.Price);
 
@@ -52,9 +51,20 @@ public class BookingService(
 
     public Ticket? GetById(string id) => ticketRepo.GetById(id);
 
-    public (bool Success, string Message) CancelBooking(string userId, string scheduleId, int seatNumber, string invoiceId)
+    public (bool Success, string Message) CancelBooking(string userId, string invoiceId)
     {
-        var schedule = scheduleRepo.GetById(scheduleId);
+        var invoice = invoiceService.GetById(invoiceId);
+        if (invoice == null) return (false, "Invoice not found.");
+        if (invoice.UserId != userId)
+            return (false, "Cancellation failed. Invoice does not belong to this user.");
+
+        var ticket = ticketRepo.GetById(invoice.TicketId);
+        if (ticket == null)
+            return (false, "Ticket not found.");
+        if (ticket.UserId != userId)
+            return (false, "Cancellation failed. Ticket does not belong to this user.");
+
+        var schedule = scheduleRepo.GetById(ticket.ScheduleId);
         if (schedule == null) return (false, "Schedule not found.");
 
         var bus = busRepo.GetById(schedule.BusId);
@@ -66,24 +76,12 @@ public class BookingService(
             return (false, "Cancellation failed. Invoice may already be paid or not found.");
         }
 
-        var isCLearReservedSeatSuccessful = bus.ClearReservedSeat($"S{seatNumber:D2}");
-        if (!isCLearReservedSeatSuccessful)
+        var seatFreed = bus.ClearReservedSeat(ticket.SeatNumber);
+        if (!seatFreed)
         {
-            return (false, $"Failed to clear reserved seat S{seatNumber:D2}. It may not be reserved.");
+            return (false, $"Failed to clear reserved seat {ticket.SeatNumber}. It may not be reserved.");
         }
 
-        var user = userRepo.GetById(userId);
-        if (user == null) return (false, "User not found.");
-
-        var invoice = invoiceService.GetById(invoiceId);
-        if (invoice == null) return (false, "Invoice not found.");
-
-        var ticket = ticketRepo.GetById(invoice.TicketId);
-        if (ticket == null)
-        {
-            return (false, "Ticket not found.");
-        }
-        user.RemoveTicket(ticket.TicketId);
         ticketRepo.Remove(ticket.TicketId);
 
         return (true, "Cancellation successful!");

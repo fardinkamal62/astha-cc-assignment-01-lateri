@@ -2,24 +2,16 @@ using LateRi.BusBookingSystem.ConsoleUI.Enums;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.Models;
 
-public class Invoice : BaseEntity
+public class Invoice(string ticketId, string userId, decimal amountDue) : BaseEntity
 {
     public string InvoiceId => Id;
-    public string TicketId { get; private set; }
-    public string UserId { get; private set; }
-    public decimal AmountDue { get; private set; }
-    public DateTime GeneratedDate { get; private set; }
-    public PaymentStatus Status { get; private set; }
-    public bool IsPaid => Status == PaymentStatus.Paid;
+    public string TicketId { get; private set; } = ticketId;
+    public string UserId { get; private set; } = userId;
+    public decimal AmountDue { get; private set; } = amountDue;
+    public DateTimeOffset GeneratedDate { get; private set; } = DateTimeOffset.UtcNow;
+    public PaymentStatus Status { get; private set; } = PaymentStatus.Pending;
 
-    public Invoice(string ticketId, string userId, decimal amountDue)
-    {
-        TicketId = ticketId;
-        UserId = userId;
-        AmountDue = amountDue;
-        GeneratedDate = DateTime.Now;
-        Status = PaymentStatus.Pending;
-    }
+    public bool IsPaid => Status == PaymentStatus.Paid;
 
     private void MarkAsPaid() => Status = PaymentStatus.Paid;
     private void MarkAsCancelled() => Status = PaymentStatus.Cancelled;

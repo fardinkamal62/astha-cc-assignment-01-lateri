@@ -4,5 +4,4 @@ namespace LateRi.BusBookingSystem.ConsoleUI.Interfaces;
 
 public interface IScheduleRepository: IRepository<Schedule>
 {
-    IReadOnlyList<Schedule> GetByBusId(string busId);
 }
