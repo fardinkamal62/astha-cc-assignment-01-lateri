@@ -14,4 +14,6 @@ public class ScheduleRepository : IScheduleRepository
     public Schedule? GetById(string userId) => _store.TryGetValue(userId, out var schedule) ? schedule : null;
 
     public IReadOnlyList<Schedule> GetByBusId(string busId) => _store.Values.Where(s => s.BusId == busId).ToList();
+
+    public bool Remove(string id) => _store.Remove(id);
 }

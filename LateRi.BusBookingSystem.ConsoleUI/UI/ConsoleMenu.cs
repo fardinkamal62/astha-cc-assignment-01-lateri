@@ -344,6 +344,39 @@ public class ConsoleMenu(
             return;
         }
 
+        IReadOnlyList<string> choices = ["Pay", "Cancel"];
+        var choice = SelectFromList(choices, c => c, "Choose action: ");
+        if (choice == null)
+        {
+            Console.WriteLine("Invalid selection.");
+            Pause();
+            return;
+        }
+
+        if (choice == "Cancel")
+        {
+            var ticket = bookingService.GetById(invoice.TicketId);
+            if (ticket == null)
+            {
+                Console.WriteLine("Ticket not found.");
+                Pause();
+                return;
+            }
+
+            if (!int.TryParse(ticket.SeatNumber[1..], out var seatNum))
+            {
+                Console.WriteLine("Invalid seat number on ticket.");
+                Pause();
+                return;
+            }
+
+            var result = bookingService.CancelBooking(user.UserId, ticket.ScheduleId, seatNum, invoice.Id);
+            Console.WriteLine(result.Message);
+
+            Pause();
+            return;
+        }
+
         if (invoiceService.Pay(invoice.Id))
             Console.WriteLine("Payment successful.");
         else
@@ -380,6 +413,7 @@ public class ConsoleMenu(
 
         Pause();
     }
+
     private static void Pause()
     {
         Console.WriteLine("\nPress any key to continue...");

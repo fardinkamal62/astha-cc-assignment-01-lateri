@@ -42,4 +42,11 @@ public class Bus : BaseEntity
         $"Seats: {TotalSeats - _reservedSeats.Count}/{TotalSeats} available";
 
     public override string ToString() => GetSummary();
+
+    public bool ClearReservedSeat(string seatNumber)
+    {
+        if (!_reservedSeats.Contains(seatNumber)) return false;
+        _reservedSeats.Remove(seatNumber);
+        return true;
+    }
 }

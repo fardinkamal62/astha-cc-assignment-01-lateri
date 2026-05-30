@@ -10,7 +10,6 @@ public class BookingService(
     IUserRepository userRepo,
     InvoiceService invoiceService)
 {
-
     public (bool Success, string Message, Ticket? Ticket) Book(
         string userId, string scheduleId, int seatNumber)
     {
@@ -52,4 +51,41 @@ public class BookingService(
     }
 
     public Ticket? GetById(string id) => ticketRepo.GetById(id);
+
+    public (bool Success, string Message) CancelBooking(string userId, string scheduleId, int seatNumber, string invoiceId)
+    {
+        var schedule = scheduleRepo.GetById(scheduleId);
+        if (schedule == null) return (false, "Schedule not found.");
+
+        var bus = busRepo.GetById(schedule.BusId);
+        if (bus == null) return (false, "Bus not found.");
+
+        var isCancellationSuccessful = invoiceService.CancelPay(invoiceId);
+        if (!isCancellationSuccessful)
+        {
+            return (false, "Cancellation failed. Invoice may already be paid or not found.");
+        }
+
+        var isCLearReservedSeatSuccessful = bus.ClearReservedSeat($"S{seatNumber:D2}");
+        if (!isCLearReservedSeatSuccessful)
+        {
+            return (false, $"Failed to clear reserved seat S{seatNumber:D2}. It may not be reserved.");
+        }
+
+        var user = userRepo.GetById(userId);
+        if (user == null) return (false, "User not found.");
+
+        var invoice = invoiceService.GetById(invoiceId);
+        if (invoice == null) return (false, "Invoice not found.");
+
+        var ticket = ticketRepo.GetById(invoice.TicketId);
+        if (ticket == null)
+        {
+            return (false, "Ticket not found.");
+        }
+        user.RemoveTicket(ticket.TicketId);
+        ticketRepo.Remove(ticket.TicketId);
+
+        return (true, "Cancellation successful!");
+    }
 }

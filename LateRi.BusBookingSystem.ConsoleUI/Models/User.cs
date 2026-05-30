@@ -24,4 +24,6 @@ public class User : BaseEntity
         $"[{UserId}] {Name} | {Mobile} | {Email}";
 
     public override string ToString() => GetSummary();
+
+    public void RemoveTicket(string ticketId) => _ticketIds.Remove(ticketId);
 }

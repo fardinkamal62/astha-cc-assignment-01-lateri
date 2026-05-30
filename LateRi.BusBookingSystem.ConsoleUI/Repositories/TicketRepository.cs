@@ -16,4 +16,6 @@ public class TicketRepository : ITicketRepository
     public IReadOnlyList<Ticket> GetByUserId(string userId) => _store.Values.Where(t => t.UserId == userId).ToList();
 
     public bool IsSeatBooked(string scheduleId, string seatNumber) => _store.Values.Any(s => s.ScheduleId == scheduleId && s.SeatNumber == seatNumber);
+
+    public bool Remove(string id) => _store.Remove(id);
 }

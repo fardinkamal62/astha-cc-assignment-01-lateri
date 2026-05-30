@@ -14,4 +14,6 @@ public class InvoiceRepository : IInvoiceRepository
     public Invoice? GetById(string userId) => _store.TryGetValue(userId, out var invoice) ? invoice : null;
 
     public IReadOnlyList<Invoice> GetByUserId(string userId) => _store.Values.Where(i => i.UserId == userId).ToList();
+
+    public bool Remove(string id) => _store.Remove(id);
 }
