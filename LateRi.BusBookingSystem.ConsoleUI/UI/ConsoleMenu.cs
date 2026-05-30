@@ -1,3 +1,4 @@
+using LateRi.BusBookingSystem.ConsoleUI.Abstractions;
 using LateRi.BusBookingSystem.ConsoleUI.Enums;
 using LateRi.BusBookingSystem.ConsoleUI.Models;
 using LateRi.BusBookingSystem.ConsoleUI.Services;
@@ -70,8 +71,14 @@ public class ConsoleMenu(
         Console.Write("Email : ");
         var email = Console.ReadLine()!;
 
-        var user = userService.Create(name, mobile, email);
-        Console.WriteLine($"User created: {UserLabel(user)}");
+        var userResult = userService.Create(name, mobile, email);
+        if (userResult.IsFailure)
+        {
+            Console.WriteLine($"Error: {userResult.Message}");
+            Pause();
+            return;
+        }
+        Console.WriteLine($"User created: {UserLabel(userResult.Data!)}");
         Pause();
     }
 
@@ -97,8 +104,14 @@ public class ConsoleMenu(
         var clsInput = Console.ReadLine();
         var classification = clsInput == "1" ? BusClassification.Business : BusClassification.Economy;
 
-        var bus = busService.Create(coach, classification);
-        Console.WriteLine($"Bus created: {BusLabel(bus)}");
+        var busResult = busService.Create(coach, classification);
+        if (busResult.IsFailure)
+        {
+            Console.WriteLine($"Error: {busResult.Message}");
+            Pause();
+            return;
+        }
+        Console.WriteLine($"Bus created: {BusLabel(busResult.Data!)}");
         Pause();
     }
 
@@ -156,8 +169,14 @@ public class ConsoleMenu(
             return;
         }
 
-        var schedule = scheduleService.Create(selectedBus.BusId, from, to, departure, price);
-        Console.WriteLine($"Schedule created: {ScheduleLabel(schedule)}");
+        var scheduleResult = scheduleService.Create(selectedBus.BusId, from, to, departure, price);
+        if (scheduleResult.IsFailure)
+        {
+            Console.WriteLine($"Error: {scheduleResult.Message}");
+            Pause();
+            return;
+        }
+        Console.WriteLine($"Schedule created: {ScheduleLabel(scheduleResult.Data!)}");
         Pause();
     }
 
@@ -264,10 +283,10 @@ public class ConsoleMenu(
         }
 
         var result = bookingService.Book(user.UserId, schedule.ScheduleId, seat);
-        if (result.Success)
+        if (result.IsSuccess)
         {
             Console.WriteLine(result.Message);
-            Console.WriteLine($"Ticket booked: {TicketLabel(result.Ticket!)}");
+            Console.WriteLine($"Ticket booked: {TicketLabel(result.Data!)}");
             Console.WriteLine("Invoice auto-generated.");
         }
         else
@@ -362,10 +381,11 @@ public class ConsoleMenu(
             return;
         }
 
-        if (invoiceService.Pay(invoice.Id))
-            Console.WriteLine("Payment successful.");
+        var payResult = invoiceService.Pay(invoice.Id);
+        if (payResult.IsSuccess)
+            Console.WriteLine(payResult.Message);
         else
-            Console.WriteLine("Payment failed. Check the Invoice ID.");
+            Console.WriteLine($"Error: {payResult.Message}");
 
         Pause();
     }

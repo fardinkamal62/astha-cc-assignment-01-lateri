@@ -1,3 +1,4 @@
+using LateRi.BusBookingSystem.ConsoleUI.Abstractions;
 using LateRi.BusBookingSystem.ConsoleUI.Interfaces;
 using LateRi.BusBookingSystem.ConsoleUI.Models;
 using System.Text.RegularExpressions;
@@ -6,20 +7,20 @@ namespace LateRi.BusBookingSystem.ConsoleUI.Services;
 
 public class UserService(IUserRepository userRepository)
 {
-    public User Create(string name, string mobile, string email)
+    public Result<User> Create(string name, string mobile, string email)
     {
         if (string.IsNullOrWhiteSpace(name) || name.Trim().Length < 3)
-            throw new ArgumentException("Name is required and should be at least 3 characters long.");
+            return Result<User>.Failure("Name is required and should be at least 3 characters long.");
 
         if (!IsValidEmail(email))
-            throw new ArgumentException("Invalid email format.");
+            return Result<User>.Failure("Invalid email format.");
 
         if (!IsValidMobile(mobile))
-            throw new ArgumentException("Invalid mobile number. It should be 11 digits (e.g., 01711223344).");
+            return Result<User>.Failure("Invalid mobile number. It should be 11 digits (e.g., 01711223344).");
 
         var user = new User(name, mobile, email);
         userRepository.Add(user);
-        return user;
+        return Result<User>.Success("User created.", user);
     }
 
     public IReadOnlyList<User> GetAll() => userRepository.GetAll();

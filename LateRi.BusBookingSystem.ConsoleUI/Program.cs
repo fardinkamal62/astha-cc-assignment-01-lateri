@@ -26,8 +26,8 @@ void SeedData()
     userService.Create("Abdullah Rayed", "01811000001", "rayed@ait.com");
     userService.Create("Rahat Khan Pathan", "01912000002", "rahat@ait.com");
 
-    var bus1 = busService.Create("Shohagh Prestige", BusClassification.Business);
-    var bus2 = busService.Create("Shyamoli NR Travels", BusClassification.Economy);
+    var bus1 = busService.Create("Shohagh Prestige", BusClassification.Business).Data!;
+    var bus2 = busService.Create("Shyamoli NR Travels", BusClassification.Economy).Data!;
 
     scheduleService.Create(bus1.BusId, "Dhaka", "Chittagong", DateTime.Today.AddHours(10), 650m);
     scheduleService.Create(bus1.BusId, "Dhaka", "Sylhet", DateTime.Today.AddHours(15), 700m);

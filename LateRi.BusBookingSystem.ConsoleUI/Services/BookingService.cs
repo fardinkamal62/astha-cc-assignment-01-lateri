@@ -1,3 +1,4 @@
+using LateRi.BusBookingSystem.ConsoleUI.Abstractions;
 using LateRi.BusBookingSystem.ConsoleUI.Interfaces;
 using LateRi.BusBookingSystem.ConsoleUI.Models;
 
@@ -10,25 +11,24 @@ public class BookingService(
     IUserRepository userRepo,
     InvoiceService invoiceService)
 {
-    public (bool Success, string Message, Ticket? Ticket) Book(
-        string userId, string scheduleId, int seatNumber)
+    public Result<Ticket> Book(string userId, string scheduleId, int seatNumber)
     {
         var user = userRepo.GetById(userId);
-        if (user == null) return (false, "User not found.", null);
+        if (user == null) return Result<Ticket>.Failure("User not found.");
 
         var schedule = scheduleRepo.GetById(scheduleId);
-        if (schedule == null) return (false, "Schedule not found.", null);
+        if (schedule == null) return Result<Ticket>.Failure("Schedule not found.");
 
         var bus = busRepo.GetById(schedule.BusId);
-        if (bus == null) return (false, "Bus not found.", null);
+        if (bus == null) return Result<Ticket>.Failure("Bus not found.");
 
         if (seatNumber < 1 || seatNumber > bus.TotalSeats)
-            return (false, $"Invalid seat. Must be between 1 and {bus.TotalSeats}.", null);
+            return Result<Ticket>.Failure($"Invalid seat. Must be between 1 and {bus.TotalSeats}.");
 
         var seatCode = $"S{seatNumber:D2}";
 
         if (!bus.IsSeatAvailable(seatCode))
-            return (false, $"Seat {seatCode} is already reserved.", null);
+            return Result<Ticket>.Failure($"Seat {seatCode} is already reserved.");
 
         bus.ReserveSeat(seatCode);
 
@@ -37,7 +37,7 @@ public class BookingService(
 
         invoiceService.Create(ticket.TicketId, userId, ticket.Price);
 
-        return (true, "Booking successful!", ticket);
+        return Result<Ticket>.Success("Booking successful!", ticket);
     }
 
     public List<Ticket> GetByUser(string userId) => ticketRepo.GetByUserId(userId).ToList();
@@ -51,39 +51,37 @@ public class BookingService(
 
     public Ticket? GetById(string id) => ticketRepo.GetById(id);
 
-    public (bool Success, string Message) CancelBooking(string userId, string invoiceId)
+    public Result CancelBooking(string userId, string invoiceId)
     {
-        var invoice = invoiceService.GetById(invoiceId);
-        if (invoice == null) return (false, "Invoice not found.");
-        if (invoice.UserId != userId)
-            return (false, "Cancellation failed. Invoice does not belong to this user.");
+        var user = userRepo.GetById(userId);
+        if (user == null) return Result.Failure("User not found.");
 
-        var ticket = ticketRepo.GetById(invoice.TicketId);
-        if (ticket == null)
-            return (false, "Ticket not found.");
+        var invoice = invoiceService.GetById(invoiceId);
+        if (invoice == null) return Result.Failure("Invoice not found.");
+        if (invoice.UserId != userId)
+            return Result.Failure("Cancellation failed. Invoice does not belong to this user.");
+
+        var ticket = GetById(invoice.TicketId);
+        if (ticket == null) return Result.Failure("Ticket not found.");
         if (ticket.UserId != userId)
-            return (false, "Cancellation failed. Ticket does not belong to this user.");
+            return Result.Failure("Cancellation failed. Ticket does not belong to this user.");
+
+        var cancelResult = invoiceService.CancelPay(invoiceId);
+        if (cancelResult.IsFailure)
+            return cancelResult;
 
         var schedule = scheduleRepo.GetById(ticket.ScheduleId);
-        if (schedule == null) return (false, "Schedule not found.");
+        if (schedule == null) return Result.Failure("Schedule not found.");
 
         var bus = busRepo.GetById(schedule.BusId);
-        if (bus == null) return (false, "Bus not found.");
-
-        var isCancellationSuccessful = invoiceService.CancelPay(invoiceId);
-        if (!isCancellationSuccessful)
-        {
-            return (false, "Cancellation failed. Invoice may already be paid or not found.");
-        }
+        if (bus == null) return Result.Failure("Bus not found.");
 
         var seatFreed = bus.ClearReservedSeat(ticket.SeatNumber);
         if (!seatFreed)
-        {
-            return (false, $"Failed to clear reserved seat {ticket.SeatNumber}. It may not be reserved.");
-        }
+            return Result.Failure($"Failed to clear reserved seat {ticket.SeatNumber}. It may not be reserved.");
 
         ticketRepo.Remove(ticket.TicketId);
 
-        return (true, "Cancellation successful!");
+        return Result.Success("Cancellation successful!");
     }
 }

@@ -1,3 +1,4 @@
+using LateRi.BusBookingSystem.ConsoleUI.Abstractions;
 using LateRi.BusBookingSystem.ConsoleUI.Interfaces;
 using LateRi.BusBookingSystem.ConsoleUI.Models;
 
@@ -22,19 +23,21 @@ public class InvoiceService(IInvoiceRepository invoiceRepository)
 
     public Invoice? GetById(string id) => invoiceRepository.GetById(id);
 
-    public bool Pay(string invoiceId)
+    public Result Pay(string invoiceId)
     {
         var invoice = GetById(invoiceId);
-        if (invoice == null || invoice.IsPaid) return false;
+        if (invoice == null) return Result.Failure("Invoice not found.");
+        if (invoice.IsPaid) return Result.Failure("Invoice is already paid.");
         invoice.MarkPaid();
-        return true;
+        return Result.Success("Payment successful.");
     }
 
-    public bool CancelPay(string invoiceId)
+    public Result CancelPay(string invoiceId)
     {
         var invoice = GetById(invoiceId);
-        if (invoice == null || invoice.IsPaid) return false;
+        if (invoice == null) return Result.Failure("Invoice not found.");
+        if (invoice.IsPaid) return Result.Failure("Invoice is already paid.");
         invoice.MarkCancelled();
-        return true;
+        return Result.Success("Invoice cancelled.");
     }
 }
