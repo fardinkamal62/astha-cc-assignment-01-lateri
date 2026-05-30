@@ -1,16 +1,17 @@
 using LateRi.BusBookingSystem.ConsoleUI.Abstractions;
 using LateRi.BusBookingSystem.ConsoleUI.Enums;
+using LateRi.BusBookingSystem.ConsoleUI.Interfaces;
 using LateRi.BusBookingSystem.ConsoleUI.Models;
 using LateRi.BusBookingSystem.ConsoleUI.Services;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.UI;
 
 public class ConsoleMenu(
-    UserService userService,
-    BusService busService,
-    ScheduleService scheduleService,
+    IUserService userService,
+    IBusService busService,
+    IScheduleService scheduleService,
     BookingService bookingService,
-    InvoiceService invoiceService)
+    IInvoiceService invoiceService)
 {
     public void Run()
     {

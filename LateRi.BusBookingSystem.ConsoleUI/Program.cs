@@ -13,7 +13,8 @@ var userService = new UserService(userRepo);
 var busService = new BusService(busRepo);
 var scheduleService = new ScheduleService(scheduleRepo);
 var invoiceService = new InvoiceService(invoiceRepo);
-var bookingService = new BookingService(busRepo, scheduleRepo, ticketRepo, userRepo, invoiceService);
+var ticketService = new TicketService(ticketRepo);
+var bookingService = new BookingService(ticketService, userService, scheduleService, busService, invoiceService);
 
 SeedData();
 

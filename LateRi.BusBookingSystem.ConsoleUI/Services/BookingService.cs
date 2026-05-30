@@ -5,21 +5,21 @@ using LateRi.BusBookingSystem.ConsoleUI.Models;
 namespace LateRi.BusBookingSystem.ConsoleUI.Services;
 
 public class BookingService(
-    IBusRepository busRepo,
-    IScheduleRepository scheduleRepo,
-    ITicketRepository ticketRepo,
-    IUserRepository userRepo,
-    InvoiceService invoiceService)
+    ITicketService ticketService,
+    IUserService userService,
+    IScheduleService scheduleService,
+    IBusService busService,
+    IInvoiceService invoiceService)
 {
     public Result<Ticket> Book(string userId, string scheduleId, int seatNumber)
     {
-        var user = userRepo.GetById(userId);
+        var user = userService.GetById(userId);
         if (user == null) return Result<Ticket>.Failure("User not found.");
 
-        var schedule = scheduleRepo.GetById(scheduleId);
+        var schedule = scheduleService.GetById(scheduleId);
         if (schedule == null) return Result<Ticket>.Failure("Schedule not found.");
 
-        var bus = busRepo.GetById(schedule.BusId);
+        var bus = busService.GetById(schedule.BusId);
         if (bus == null) return Result<Ticket>.Failure("Bus not found.");
 
         if (seatNumber < 1 || seatNumber > bus.TotalSeats)
@@ -33,27 +33,27 @@ public class BookingService(
         bus.ReserveSeat(seatCode);
 
         var ticket = new Ticket(userId, scheduleId, bus.BusId, seatCode, schedule.TicketPrice);
-        ticketRepo.Add(ticket);
+        ticketService.Add(ticket);
 
         invoiceService.Create(ticket.TicketId, userId, ticket.Price);
 
         return Result<Ticket>.Success("Booking successful!", ticket);
     }
 
-    public List<Ticket> GetByUser(string userId) => ticketRepo.GetByUserId(userId).ToList();
+    public List<Ticket> GetByUser(string userId) => ticketService.GetByUserId(userId).ToList();
 
     public List<string> GetAvailableSeats(string scheduleId)
     {
-        var schedule = scheduleRepo.GetById(scheduleId);
+        var schedule = scheduleService.GetById(scheduleId);
         if (schedule == null) return [];
-        return busRepo.GetById(schedule.BusId)?.GetAvailableSeats() ?? [];
+        return busService.GetById(schedule.BusId)?.GetAvailableSeats() ?? [];
     }
 
-    public Ticket? GetById(string id) => ticketRepo.GetById(id);
+    public Ticket? GetById(string id) => ticketService.GetById(id);
 
     public Result CancelBooking(string userId, string invoiceId)
     {
-        var user = userRepo.GetById(userId);
+        var user = userService.GetById(userId);
         if (user == null) return Result.Failure("User not found.");
 
         var invoice = invoiceService.GetById(invoiceId);
@@ -70,17 +70,17 @@ public class BookingService(
         if (cancelResult.IsFailure)
             return cancelResult;
 
-        var schedule = scheduleRepo.GetById(ticket.ScheduleId);
+        var schedule = scheduleService.GetById(ticket.ScheduleId);
         if (schedule == null) return Result.Failure("Schedule not found.");
 
-        var bus = busRepo.GetById(schedule.BusId);
+        var bus = busService.GetById(schedule.BusId);
         if (bus == null) return Result.Failure("Bus not found.");
 
         var seatFreed = bus.ClearReservedSeat(ticket.SeatNumber);
         if (!seatFreed)
             return Result.Failure($"Failed to clear reserved seat {ticket.SeatNumber}. It may not be reserved.");
 
-        ticketRepo.Remove(ticket.TicketId);
+        ticketService.Remove(ticket.TicketId);
 
         return Result.Success("Cancellation successful!");
     }

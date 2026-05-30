@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.Services;
 
-public class UserService(IUserRepository userRepository)
+public class UserService(IUserRepository userRepository) : IUserService
 {
     public Result<User> Create(string name, string mobile, string email)
     {

@@ -5,7 +5,7 @@ using LateRi.BusBookingSystem.ConsoleUI.Models;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.Services;
 
-public class BusService(IBusRepository iBusRepository)
+public class BusService(IBusRepository iBusRepository) : IBusService
 {
     public Result<Bus> Create(string coachNumber, BusClassification classification)
     {

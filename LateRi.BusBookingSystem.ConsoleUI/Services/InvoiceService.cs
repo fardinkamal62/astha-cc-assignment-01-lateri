@@ -4,7 +4,7 @@ using LateRi.BusBookingSystem.ConsoleUI.Models;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.Services;
 
-public class InvoiceService(IInvoiceRepository invoiceRepository)
+public class InvoiceService(IInvoiceRepository invoiceRepository) : IInvoiceService
 {
     public Invoice Create(string ticketId, string userId, decimal amount)
     {

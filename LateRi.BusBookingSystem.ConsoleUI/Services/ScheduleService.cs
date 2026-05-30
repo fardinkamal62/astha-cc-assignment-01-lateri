@@ -4,7 +4,7 @@ using LateRi.BusBookingSystem.ConsoleUI.Models;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.Services;
 
-public class ScheduleService(IScheduleRepository scheduleRepository)
+public class ScheduleService(IScheduleRepository scheduleRepository) : IScheduleService
 {
     public Result<Schedule> Create(string busId, string from, string to, DateTime departure, decimal price)
     {
