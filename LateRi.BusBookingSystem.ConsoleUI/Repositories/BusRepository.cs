@@ -7,7 +7,7 @@ public class BusRepository: IBusRepository
 {
     private readonly Dictionary<string, Bus> _store = new();
 
-    public void Add(Bus bus) => _store.Add(bus.Id, bus);
+    public void Add(Bus bus) => _store.TryAdd(bus.Id, bus);
 
     public IReadOnlyList<Bus> GetAll() => _store.Values.ToList();
 

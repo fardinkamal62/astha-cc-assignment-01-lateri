@@ -1,7 +1,15 @@
+using LateRi.BusBookingSystem.ConsoleUI;
 using LateRi.BusBookingSystem.ConsoleUI.Enums;
+using LateRi.BusBookingSystem.ConsoleUI.Interfaces;
 using LateRi.BusBookingSystem.ConsoleUI.Repositories;
 using LateRi.BusBookingSystem.ConsoleUI.Services;
 using LateRi.BusBookingSystem.ConsoleUI.UI;
+
+if (args.Length > 0 && args[0].Equals("test", StringComparison.OrdinalIgnoreCase))
+{
+    TestRunner.RunAll();
+    return;
+}
 
 var userRepo = new UserRepository();
 var busRepo = new BusRepository();
@@ -9,10 +17,12 @@ var scheduleRepo = new ScheduleRepository();
 var ticketRepo = new TicketRepository();
 var invoiceRepo = new InvoiceRepository();
 
+IPaymentProcessor paymentProcessor = new CashPaymentProcessor();
+
 var userService = new UserService(userRepo);
 var busService = new BusService(busRepo);
-var scheduleService = new ScheduleService(scheduleRepo);
-var invoiceService = new InvoiceService(invoiceRepo);
+var scheduleService = new ScheduleService(scheduleRepo, busRepo);
+var invoiceService = new InvoiceService(invoiceRepo, paymentProcessor);
 var ticketService = new TicketService(ticketRepo);
 var bookingService = new BookingService(ticketService, userService, scheduleService, busService, invoiceService);
 

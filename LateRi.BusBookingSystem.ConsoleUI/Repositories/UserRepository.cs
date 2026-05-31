@@ -7,7 +7,7 @@ public class UserRepository: IUserRepository
 {
     private readonly Dictionary<string, User> _store = new();
 
-    public void Add(User user) => _store.Add(user.Id, user);
+    public void Add(User user) => _store.TryAdd(user.Id, user);
 
     public IReadOnlyList<User> GetAll() => _store.Values.ToList();
 

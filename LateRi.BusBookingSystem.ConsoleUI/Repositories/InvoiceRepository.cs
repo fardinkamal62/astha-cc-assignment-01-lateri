@@ -7,7 +7,7 @@ public class InvoiceRepository : IInvoiceRepository
 {
     private readonly Dictionary<string, Invoice> _store = new();
 
-    public void Add(Invoice invoice) => _store.Add(invoice.Id, invoice);
+    public void Add(Invoice invoice) => _store.TryAdd(invoice.Id, invoice);
 
     public IReadOnlyList<Invoice> GetAll() => _store.Values.ToList();
 

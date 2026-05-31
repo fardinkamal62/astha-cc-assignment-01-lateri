@@ -18,13 +18,15 @@ public class ConsoleMenu(
         while (true)
         {
             Console.Clear();
-            Console.WriteLine("=== BUS TICKET BOOKING SYSTEM ===");
+            Console.WriteLine("=== LateRi Bus Booking System ===");
             Console.WriteLine();
+            Console.WriteLine("---Admin Menu---");
             Console.WriteLine("1. Create User");
             Console.WriteLine("2. Display All Users");
             Console.WriteLine("3. Create Bus");
-            Console.WriteLine("4. Display All Buses");
-            Console.WriteLine("5. Create Schedule");
+            Console.WriteLine("4. Create Schedule");
+            Console.WriteLine("---User Menu---");
+            Console.WriteLine("5. Display All Buses");
             Console.WriteLine("6. Display All Schedules");
             Console.WriteLine("7. Display Schedule Details");
             Console.WriteLine("8. Book Ticket");
@@ -42,8 +44,8 @@ public class ConsoleMenu(
                 case "1": CreateUser(); break;
                 case "2": DisplayAllUsers(); break;
                 case "3": CreateBus(); break;
-                case "4": DisplayAllBuses(); break;
-                case "5": CreateSchedule(); break;
+                case "4": CreateSchedule(); break;
+                case "5": DisplayAllBuses(); break;
                 case "6": DisplayAllSchedules(); break;
                 case "7": DisplayScheduleDetails(); break;
                 case "8": BookTicket(); break;
@@ -222,7 +224,7 @@ public class ConsoleMenu(
         {
             Console.WriteLine(
                 $"Available seats: {bookingService.GetAvailableSeats(schedule.ScheduleId).Count}/{bus.TotalSeats}");
-            Console.WriteLine(bus.GetSeatLayout());
+            Console.WriteLine(SeatLayoutRenderer.Render(bus));
         }
         Pause();
     }
@@ -278,7 +280,7 @@ public class ConsoleMenu(
         var available = bookingService.GetAvailableSeats(schedule.ScheduleId);
 
         Console.WriteLine($"\nAvailable seats ({available.Count}/{bus.TotalSeats}):");
-        Console.WriteLine(bus.GetSeatLayout());
+        Console.WriteLine(SeatLayoutRenderer.Render(bus));
         Console.Write("Choose a seat code (e.g., A1): ");
         var seatCode = Console.ReadLine()?.Trim().ToUpper();
         if (string.IsNullOrWhiteSpace(seatCode) || !available.Contains(seatCode))

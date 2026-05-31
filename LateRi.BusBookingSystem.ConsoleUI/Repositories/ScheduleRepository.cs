@@ -7,7 +7,7 @@ public class ScheduleRepository : IScheduleRepository
 {
     private readonly Dictionary<string, Schedule> _store = new();
 
-    public void Add(Schedule schedule) => _store.Add(schedule.Id, schedule);
+    public void Add(Schedule schedule) => _store.TryAdd(schedule.Id, schedule);
 
     public IReadOnlyList<Schedule> GetAll() => _store.Values.ToList();
 

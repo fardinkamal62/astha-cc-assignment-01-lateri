@@ -9,12 +9,12 @@ public class Invoice(string ticketId, string userId, decimal amountDue) : BaseEn
     public string UserId { get; private set; } = userId;
     public decimal AmountDue { get; private set; } = amountDue;
     public DateTimeOffset GeneratedDate { get; private set; } = DateTimeOffset.UtcNow;
-    public PaymentStatus Status { get; private set; } = PaymentStatus.Pending;
+    public PaymentStatus Status { get; private set; } = PaymentStatus.Unpaid;
 
     public bool IsPaid => Status == PaymentStatus.Paid;
 
     private void MarkAsPaid() => Status = PaymentStatus.Paid;
-    private void MarkAsCancelled() => Status = PaymentStatus.Cancelled;
+    private void MarkAsCancelled() => Status = PaymentStatus.Unpaid;
 
     public void MarkPaid() => MarkAsPaid();
     public void MarkCancelled() => MarkAsCancelled();

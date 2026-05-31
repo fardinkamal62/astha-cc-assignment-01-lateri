@@ -13,7 +13,4 @@ public abstract class BaseEntity
 
     // Abstract method - forces all entities to define their display format
     public abstract string GetSummary();
-
-    // Virtual method - can be overridden
-    public virtual void Display() => Console.WriteLine(GetSummary());
 }

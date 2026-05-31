@@ -4,8 +4,10 @@ using LateRi.BusBookingSystem.ConsoleUI.Models;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.Services;
 
-public class InvoiceService(IInvoiceRepository invoiceRepository) : IInvoiceService
+public class InvoiceService(IInvoiceRepository invoiceRepository, IPaymentProcessor? paymentProcessor = null) : IInvoiceService
 {
+    private readonly IPaymentProcessor _paymentProcessor = paymentProcessor ?? new CashPaymentProcessor();
+
     public Invoice Create(string ticketId, string userId, decimal amount)
     {
         var invoice = new Invoice(ticketId, userId, amount);
@@ -28,8 +30,10 @@ public class InvoiceService(IInvoiceRepository invoiceRepository) : IInvoiceServ
         var invoice = GetById(invoiceId);
         if (invoice == null) return Result.Failure("Invoice not found.");
         if (invoice.IsPaid) return Result.Failure("Invoice is already paid.");
-        invoice.MarkPaid();
-        return Result.Success("Payment successful.");
+        var success = _paymentProcessor.ProcessPayment(invoice);
+        return success
+            ? Result.Success($"Payment successful via {_paymentProcessor.ProcessorName}.")
+            : Result.Failure("Payment processing failed.");
     }
 
     public Result CancelPay(string invoiceId)

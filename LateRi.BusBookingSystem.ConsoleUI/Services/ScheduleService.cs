@@ -4,12 +4,15 @@ using LateRi.BusBookingSystem.ConsoleUI.Models;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.Services;
 
-public class ScheduleService(IScheduleRepository scheduleRepository) : IScheduleService
+public class ScheduleService(IScheduleRepository scheduleRepository, IBusRepository? busRepository = null) : IScheduleService
 {
     public Result<Schedule> Create(string busId, string from, string to, DateTime departure, decimal price)
     {
         if (string.IsNullOrWhiteSpace(busId))
             return Result<Schedule>.Failure("BusId is required.");
+
+        if (busRepository != null && busRepository.GetById(busId) == null)
+            return Result<Schedule>.Failure("Bus not found.");
 
         if (string.IsNullOrWhiteSpace(from))
             return Result<Schedule>.Failure("From is required.");

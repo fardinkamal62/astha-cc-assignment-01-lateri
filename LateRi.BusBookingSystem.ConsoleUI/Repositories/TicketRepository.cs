@@ -7,7 +7,7 @@ public class TicketRepository : ITicketRepository
 {
     private readonly Dictionary<string, Ticket> _store = new();
 
-    public void Add(Ticket ticket) => _store.Add(ticket.Id, ticket);
+    public void Add(Ticket ticket) => _store.TryAdd(ticket.Id, ticket);
 
     public IReadOnlyList<Ticket> GetAll() => _store.Values.ToList();
 
