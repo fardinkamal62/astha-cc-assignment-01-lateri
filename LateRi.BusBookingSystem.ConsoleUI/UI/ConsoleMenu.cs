@@ -219,8 +219,11 @@ public class ConsoleMenu(
         if (bus != null)
             Console.WriteLine($"Bus: {BusLabel(bus)}");
         if (bus != null)
+        {
             Console.WriteLine(
                 $"Available seats: {bookingService.GetAvailableSeats(schedule.ScheduleId).Count}/{bus.TotalSeats}");
+            Console.WriteLine(bus.GetSeatLayout());
+        }
         Pause();
     }
 
@@ -274,16 +277,18 @@ public class ConsoleMenu(
 
         var available = bookingService.GetAvailableSeats(schedule.ScheduleId);
 
-        Console.WriteLine($"\nAvailable seats ({available.Count}/{bus.TotalSeats}): {string.Join(", ", available)}");
-        Console.Write($"Choose a seat number (1–{bus.TotalSeats}) : ");
-        if (!int.TryParse(Console.ReadLine(), out var seat))
+        Console.WriteLine($"\nAvailable seats ({available.Count}/{bus.TotalSeats}):");
+        Console.WriteLine(bus.GetSeatLayout());
+        Console.Write("Choose a seat code (e.g., A1): ");
+        var seatCode = Console.ReadLine()?.Trim().ToUpper();
+        if (string.IsNullOrWhiteSpace(seatCode) || !available.Contains(seatCode))
         {
-            Console.WriteLine("Invalid seat number.");
+            Console.WriteLine("Invalid or unavailable seat.");
             Pause();
             return;
         }
 
-        var result = bookingService.Book(user.UserId, schedule.ScheduleId, seat);
+        var result = bookingService.Book(user.UserId, schedule.ScheduleId, seatCode);
         if (result.IsSuccess)
         {
             Console.WriteLine(result.Message);

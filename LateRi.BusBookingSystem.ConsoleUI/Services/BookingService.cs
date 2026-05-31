@@ -11,7 +11,7 @@ public class BookingService(
     IBusService busService,
     IInvoiceService invoiceService)
 {
-    public Result<Ticket> Book(string userId, string scheduleId, int seatNumber)
+    public Result<Ticket> Book(string userId, string scheduleId, string seatCode)
     {
         var user = userService.GetById(userId);
         if (user == null) return Result<Ticket>.Failure("User not found.");
@@ -22,10 +22,8 @@ public class BookingService(
         var bus = busService.GetById(schedule.BusId);
         if (bus == null) return Result<Ticket>.Failure("Bus not found.");
 
-        if (seatNumber < 1 || seatNumber > bus.TotalSeats)
-            return Result<Ticket>.Failure($"Invalid seat. Must be between 1 and {bus.TotalSeats}.");
-
-        var seatCode = $"S{seatNumber:D2}";
+        if (!bus.IsValidSeat(seatCode))
+            return Result<Ticket>.Failure($"Invalid seat code '{seatCode}'.");
 
         if (!bus.IsSeatAvailable(seatCode))
             return Result<Ticket>.Failure($"Seat {seatCode} is already reserved.");
