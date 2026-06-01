@@ -4,10 +4,10 @@ using LateRi.BusBookingSystem.ConsoleUI.Models;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.Services;
 
-public class InvoiceService(IInvoiceRepository invoiceRepository, IPaymentProcessor? paymentProcessor = null) : IInvoiceService
+// SRP: Manages invoice creation, payment processing, and cancellation.
+// DIP: Depends on IInvoiceRepository and IPaymentProcessor abstractions.
+public class InvoiceService(IInvoiceRepository invoiceRepository, IPaymentProcessor paymentProcessor) : IInvoiceService
 {
-    private readonly IPaymentProcessor _paymentProcessor = paymentProcessor ?? new CashPaymentProcessor();
-
     public Invoice Create(string ticketId, string userId, decimal amount)
     {
         var invoice = new Invoice([ticketId], userId, amount);
@@ -37,9 +37,9 @@ public class InvoiceService(IInvoiceRepository invoiceRepository, IPaymentProces
         var invoice = GetById(invoiceId);
         if (invoice == null) return Result.Failure("Invoice not found.");
         if (invoice.IsPaid) return Result.Failure("Invoice is already paid.");
-        var success = _paymentProcessor.ProcessPayment(invoice);
+        var success = paymentProcessor.ProcessPayment(invoice);
         return success
-            ? Result.Success($"Payment successful via {_paymentProcessor.ProcessorName}.")
+            ? Result.Success($"Payment successful via {paymentProcessor.ProcessorName}.")
             : Result.Failure("Payment processing failed.");
     }
 
@@ -48,7 +48,7 @@ public class InvoiceService(IInvoiceRepository invoiceRepository, IPaymentProces
         var invoice = GetById(invoiceId);
         if (invoice == null) return Result.Failure("Invoice not found.");
         if (invoice.IsPaid) return Result.Failure("Invoice is already paid.");
-        invoice.MarkCancelled();
+        invoice.MarkAsCancelled();
         return Result.Success("Invoice cancelled.");
     }
 }

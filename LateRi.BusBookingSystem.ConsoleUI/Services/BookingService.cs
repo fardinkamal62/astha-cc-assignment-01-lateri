@@ -4,6 +4,9 @@ using LateRi.BusBookingSystem.ConsoleUI.Models;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.Services;
 
+// SRP: Orchestrates the booking workflow — validates user/schedule/bus/seat,
+//      reserves seat, creates ticket, and triggers invoice generation.
+// DIP: All dependencies are injected as interfaces, not concrete types.
 public class BookingService(
     ITicketService ticketService,
     IUserService userService,

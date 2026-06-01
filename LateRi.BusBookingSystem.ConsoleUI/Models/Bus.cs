@@ -2,6 +2,11 @@ using LateRi.BusBookingSystem.ConsoleUI.Enums;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.Models;
 
+// INHERITANCE: Bus extends BaseEntity.
+// ENCAPSULATION: Seat state is hidden behind private _reservedSeats HashSet.
+//   External code can only interact through controlled methods (ReserveSeat,
+//   IsSeatAvailable, ClearReservedSeat, GetAvailableSeats).
+// POLYMORPHISM: Overrides GetSummary().
 public class Bus : BaseEntity
 {
     public string BusId => Id;

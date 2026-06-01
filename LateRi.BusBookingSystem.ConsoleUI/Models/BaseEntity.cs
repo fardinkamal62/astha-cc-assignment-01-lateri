@@ -1,5 +1,8 @@
 namespace LateRi.BusBookingSystem.ConsoleUI.Models;
 
+// ABSTRACTION: Abstract base class for all domain entities.
+// Provides common Id generation, CreatedAt timestamp, and polymorphic behaviour.
+// INHERITANCE: All domain models (User, Bus, Schedule, Ticket, Invoice) extend this.
 public abstract class BaseEntity
 {
     public string Id { get; protected set; }
@@ -11,6 +14,6 @@ public abstract class BaseEntity
         CreatedAt = DateTimeOffset.UtcNow;
     }
 
-    // Abstract method - forces all entities to define their display format
+    // ABSTRACTION: Forces every entity to define its own display format.
     public abstract string GetSummary();
 }

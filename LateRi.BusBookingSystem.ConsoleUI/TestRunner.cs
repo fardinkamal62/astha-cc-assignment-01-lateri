@@ -12,6 +12,15 @@ public static class TestRunner
     private static int _passed = 0;
     private static int _failed = 0;
     private static int _testCount = 0;
+    private static readonly IPaymentProcessor _testPaymentProcessor = new CashPaymentProcessor();
+
+    private static (ScheduleService Service, Bus DefaultBus, BusRepository BusRepo) CreateTestScheduleService()
+    {
+        var busRepo = new BusRepository();
+        var bus = new Bus("DEFAULT-BUS", BusClassification.Economy);
+        busRepo.Add(bus);
+        return (new ScheduleService(new ScheduleRepository(), busRepo), bus, busRepo);
+    }
 
     public static void RunAll()
     {
@@ -724,9 +733,11 @@ public static class TestRunner
     private static void Schedule_Create_Valid_Success()
     {
         // Arrange
-        var repo = new ScheduleRepository();
-        var service = new ScheduleService(repo);
         var bus = new Bus("BUS-001", BusClassification.Economy);
+        var busRepo = new BusRepository();
+        busRepo.Add(bus);
+        var repo = new ScheduleRepository();
+        var service = new ScheduleService(repo, busRepo);
 
         // Act
         var departure = DateTime.Today.AddDays(1).AddHours(8);
@@ -747,7 +758,7 @@ public static class TestRunner
     private static void Schedule_Create_DepartureEmpty_Fails()
     {
         // Arrange
-        var service = new ScheduleService(new ScheduleRepository());
+        var service = CreateTestScheduleService().Service;
 
         // Act
         var result = service.Create("BUSID", "", "Chittagong", DateTime.Now.AddDays(1), 500m);
@@ -760,7 +771,7 @@ public static class TestRunner
     private static void Schedule_Create_ArrivalEmpty_Fails()
     {
         // Arrange
-        var service = new ScheduleService(new ScheduleRepository());
+        var service = CreateTestScheduleService().Service;
 
         // Act
         var result = service.Create("BUSID", "Dhaka", "", DateTime.Now.AddDays(1), 500m);
@@ -773,7 +784,7 @@ public static class TestRunner
     private static void Schedule_Create_ZeroPrice_Fails()
     {
         // Arrange
-        var service = new ScheduleService(new ScheduleRepository());
+        var service = CreateTestScheduleService().Service;
 
         // Act
         var result = service.Create("BUSID", "Dhaka", "Sylhet", DateTime.Now.AddDays(1), 0m);
@@ -786,7 +797,7 @@ public static class TestRunner
     private static void Schedule_Create_NegativePrice_Fails()
     {
         // Arrange
-        var service = new ScheduleService(new ScheduleRepository());
+        var service = CreateTestScheduleService().Service;
 
         // Act
         var result = service.Create("BUSID", "Dhaka", "Sylhet", DateTime.Now.AddDays(1), -100m);
@@ -799,7 +810,7 @@ public static class TestRunner
     private static void Schedule_Create_EmptyBusId_Fails()
     {
         // Arrange
-        var service = new ScheduleService(new ScheduleRepository());
+        var service = CreateTestScheduleService().Service;
 
         // Act
         var result1 = service.Create("", "Dhaka", "Sylhet", DateTime.Now.AddDays(1), 500m);
@@ -814,8 +825,8 @@ public static class TestRunner
     private static void Schedule_GetById_Valid_ReturnsSchedule()
     {
         // Arrange
-        var service = new ScheduleService(new ScheduleRepository());
-        var created = service.Create("BUSID", "Dhaka", "Sylhet", DateTime.Now.AddDays(1), 800m).Data!;
+        var (service, defaultBus, _) = CreateTestScheduleService();
+        var created = service.Create(defaultBus.BusId, "Dhaka", "Sylhet", DateTime.Now.AddDays(1), 800m).Data!;
 
         // Act
         var found = service.GetById(created.ScheduleId);
@@ -829,7 +840,7 @@ public static class TestRunner
     private static void Schedule_GetById_Invalid_ReturnsNull()
     {
         // Arrange
-        var service = new ScheduleService(new ScheduleRepository());
+        var service = CreateTestScheduleService().Service;
 
         // Act
         var found = service.GetById("INVALID");
@@ -842,11 +853,16 @@ public static class TestRunner
     private static void Schedule_GetAll_ReturnsAll()
     {
         // Arrange
+        var bus1 = new Bus("BUS1-COACH", BusClassification.Economy);
+        var bus2 = new Bus("BUS2-COACH", BusClassification.Economy);
+        var busRepo = new BusRepository();
+        busRepo.Add(bus1);
+        busRepo.Add(bus2);
         var repo = new ScheduleRepository();
-        var service = new ScheduleService(repo);
-        service.Create("BUS1", "Dhaka", "Sylhet", DateTime.Now.AddDays(1), 500m);
-        service.Create("BUS2", "Dhaka", "Chittagong", DateTime.Now.AddDays(1), 800m);
-        service.Create("BUS1", "Sylhet", "Dhaka", DateTime.Now.AddDays(2), 500m);
+        var service = new ScheduleService(repo, busRepo);
+        service.Create(bus1.BusId, "Dhaka", "Sylhet", DateTime.Now.AddDays(1), 500m);
+        service.Create(bus2.BusId, "Dhaka", "Chittagong", DateTime.Now.AddDays(1), 800m);
+        service.Create(bus1.BusId, "Sylhet", "Dhaka", DateTime.Now.AddDays(2), 500m);
 
         // Act
         var all = service.GetAll();
@@ -907,8 +923,8 @@ public static class TestRunner
 
         var userSvc = new UserService(userRepo);
         var busSvc = new BusService(busRepo);
-        var schedSvc = new ScheduleService(scheduleRepo);
-        var invoiceSvc = new InvoiceService(invoiceRepo);
+        var schedSvc = new ScheduleService(scheduleRepo, busRepo);
+        var invoiceSvc = new InvoiceService(invoiceRepo, _testPaymentProcessor);
         var ticketSvc = new TicketService(ticketRepo);
         var bookingSvc = new BookingService(ticketSvc, userSvc, schedSvc, busSvc, invoiceSvc);
 
@@ -950,8 +966,8 @@ public static class TestRunner
     private static void Booking_Book_NonExistentUser_Fails()
     {
         // Arrange
-        var (_, _, schedSvc, _, _, bookingSvc) = CreateBookingDependencies();
-        var bus = new Bus("TEST", BusClassification.Economy);
+        var (_, busSvc, schedSvc, _, _, bookingSvc) = CreateBookingDependencies();
+        var bus = busSvc.Create("TEST", BusClassification.Economy).Data!;
         var schedule = schedSvc.Create(bus.BusId, "Dhaka", "Sylhet",
             DateTime.Now.AddDays(1), 500m).Data!;
 
@@ -1034,7 +1050,7 @@ public static class TestRunner
         Assert(result.IsSuccess, "Booking succeeds");
         var invoices = invoiceSvc.GetByUser(user.UserId);
         AssertEqual(1, invoices.Count, "Exactly 1 invoice generated for the booking");
-        AssertEqual(result.Data!.TicketId, invoices[0].TicketId,
+        AssertEqual(result.Data!.TicketId, invoices[0].PrimaryTicketId,
             "Invoice linked to correct ticket");
         AssertEqual(user.UserId, invoices[0].UserId, "Invoice linked to correct user");
         AssertEqual(schedule.TicketPrice, invoices[0].AmountDue, "Invoice amount equals ticket price");
@@ -1104,7 +1120,7 @@ public static class TestRunner
     {
         // Arrange
         var repo = new InvoiceRepository();
-        var service = new InvoiceService(repo);
+        var service = new InvoiceService(repo, _testPaymentProcessor);
         var invoice = service.Create("TKT001", "USR001", 800m);
 
         // Act
@@ -1121,7 +1137,7 @@ public static class TestRunner
     {
         // Arrange
         var repo = new InvoiceRepository();
-        var service = new InvoiceService(repo);
+        var service = new InvoiceService(repo, _testPaymentProcessor);
         var invoice = service.Create("TKT001", "USR001", 800m);
         service.Pay(invoice.InvoiceId);
 
@@ -1138,7 +1154,7 @@ public static class TestRunner
     private static void Invoice_Pay_NonExistent_Fails()
     {
         // Arrange
-        var service = new InvoiceService(new InvoiceRepository());
+        var service = new InvoiceService(new InvoiceRepository(), _testPaymentProcessor);
 
         // Act
         var result = service.Pay("NONEXIST");
@@ -1154,7 +1170,7 @@ public static class TestRunner
     {
         // Arrange
         var repo = new InvoiceRepository();
-        var service = new InvoiceService(repo);
+        var service = new InvoiceService(repo, _testPaymentProcessor);
         var invoice = service.Create("TKT001", "USR001", 800m);
 
         // Act
@@ -1171,7 +1187,7 @@ public static class TestRunner
     {
         // Arrange
         var repo = new InvoiceRepository();
-        var service = new InvoiceService(repo);
+        var service = new InvoiceService(repo, _testPaymentProcessor);
         var invoice = service.Create("TKT001", "USR001", 800m);
         service.Pay(invoice.InvoiceId);
 
@@ -1186,7 +1202,7 @@ public static class TestRunner
     private static void Invoice_Cancel_NonExistent_Fails()
     {
         // Arrange
-        var service = new InvoiceService(new InvoiceRepository());
+        var service = new InvoiceService(new InvoiceRepository(), _testPaymentProcessor);
 
         // Act
         var result = service.CancelPay("NONEXIST");
@@ -1200,7 +1216,7 @@ public static class TestRunner
     {
         // Arrange
         var repo = new InvoiceRepository();
-        var service = new InvoiceService(repo);
+        var service = new InvoiceService(repo, _testPaymentProcessor);
         service.Create("TKT001", "USR001", 500m);
         service.Create("TKT002", "USR001", 800m);
         service.Create("TKT003", "USR002", 600m);
@@ -1221,7 +1237,7 @@ public static class TestRunner
     {
         // Arrange
         var repo = new InvoiceRepository();
-        var service = new InvoiceService(repo);
+        var service = new InvoiceService(repo, _testPaymentProcessor);
         var inv1 = service.Create("TKT001", "USR001", 500m);
         var inv2 = service.Create("TKT002", "USR001", 800m);
         service.Pay(inv1.InvoiceId);
@@ -1242,7 +1258,7 @@ public static class TestRunner
         var invoice = new Invoice(["TKT-XYZ"], "USR-ABC", 1200m);
 
         // Assert
-        AssertEqual("TKT-XYZ", invoice.TicketId, "TicketId stored correctly");
+        AssertEqual("TKT-XYZ", invoice.PrimaryTicketId, "PrimaryTicketId stored correctly");
         AssertEqual("USR-ABC", invoice.UserId, "UserId stored correctly");
         AssertEqual(1200m, invoice.AmountDue, "AmountDue stored correctly");
         Assert(invoice.GeneratedDate <= DateTimeOffset.UtcNow,
@@ -1442,9 +1458,9 @@ public static class TestRunner
 
         var userSvc = new UserService(userRepo);
         var busSvc = new BusService(busRepo);
-        var schedSvc = new ScheduleService(scheduleRepo);
+        var schedSvc = new ScheduleService(scheduleRepo, busRepo);
         var ticketSvc = new TicketService(ticketRepo);
-        var invoiceSvc = new InvoiceService(invoiceRepo);
+        var invoiceSvc = new InvoiceService(invoiceRepo, _testPaymentProcessor);
         var bookingSvc = new BookingService(ticketSvc, userSvc, schedSvc, busSvc, invoiceSvc);
 
         // Act — Step 1: Create user
@@ -1566,8 +1582,9 @@ public static class TestRunner
         Assert(tickets[0].SeatNumber == "D5", "Step 4: New ticket is for seat D5");
 
         var invoices = invoiceSvc.GetByUser(user.UserId);
-        var activeInvoices = invoices.Where(i => i.Status != PaymentStatus.Unpaid).ToList();
-        AssertEqual(1, activeInvoices.Count, "Step 4: 1 active invoice after rebooking");
+        AssertEqual(2, invoices.Count, "Step 4: 2 invoices total (old cancelled + new)");
+        var newInvoice = invoices.OrderByDescending(i => i.GeneratedDate).First();
+        AssertEqual(schedule.TicketPrice, newInvoice.AmountDue, "Step 4: New invoice has correct amount");
     }
 
     // ════════════════════════════════════════════════════════════════

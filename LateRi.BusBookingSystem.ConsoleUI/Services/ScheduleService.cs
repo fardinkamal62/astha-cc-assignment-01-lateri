@@ -4,14 +4,16 @@ using LateRi.BusBookingSystem.ConsoleUI.Models;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.Services;
 
-public class ScheduleService(IScheduleRepository scheduleRepository, IBusRepository? busRepository = null) : IScheduleService
+// DIP: Depends on IScheduleRepository and IBusRepository abstractions, not concretions.
+// SRP: Sole responsibility is schedule creation and retrieval logic.
+public class ScheduleService(IScheduleRepository scheduleRepository, IBusRepository busRepository) : IScheduleService
 {
     public Result<Schedule> Create(string busId, string from, string to, DateTime departure, decimal price)
     {
         if (string.IsNullOrWhiteSpace(busId))
             return Result<Schedule>.Failure("BusId is required.");
 
-        if (busRepository != null && busRepository.GetById(busId) == null)
+        if (busRepository.GetById(busId) == null)
             return Result<Schedule>.Failure("Bus not found.");
 
         if (string.IsNullOrWhiteSpace(from))

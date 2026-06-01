@@ -6,7 +6,7 @@ public class Invoice(IReadOnlyList<string> ticketIds, string userId, decimal amo
 {
     public string InvoiceId => Id;
     public IReadOnlyList<string> TicketIds { get; private set; } = ticketIds;
-    public string TicketId => TicketIds.FirstOrDefault() ?? string.Empty;
+    public string PrimaryTicketId => TicketIds.FirstOrDefault() ?? string.Empty;
     public string UserId { get; private set; } = userId;
     public decimal AmountDue { get; private set; } = amountDue;
     public DateTimeOffset GeneratedDate { get; private set; } = DateTimeOffset.UtcNow;
@@ -14,11 +14,8 @@ public class Invoice(IReadOnlyList<string> ticketIds, string userId, decimal amo
 
     public bool IsPaid => Status == PaymentStatus.Paid;
 
-    private void MarkAsPaid() => Status = PaymentStatus.Paid;
-    private void MarkAsCancelled() => Status = PaymentStatus.Unpaid;
-
-    public void MarkPaid() => MarkAsPaid();
-    public void MarkCancelled() => MarkAsCancelled();
+    public void MarkAsPaid() => Status = PaymentStatus.Paid;
+    public void MarkAsCancelled() => Status = PaymentStatus.Unpaid;
 
     public override string GetSummary() =>
         $"[{InvoiceId}] Tickets: {string.Join(", ", TicketIds)} | BDT {AmountDue:F2} | " +
