@@ -1,4 +1,3 @@
-using LateRi.BusBookingSystem.ConsoleUI.Abstractions;
 using LateRi.BusBookingSystem.ConsoleUI.Enums;
 using LateRi.BusBookingSystem.ConsoleUI.Interfaces;
 using LateRi.BusBookingSystem.ConsoleUI.Models;
@@ -179,7 +178,7 @@ public class ConsoleMenu(
             Pause();
             return;
         }
-        Console.WriteLine($"Schedule created: {ScheduleLabel(scheduleResult.Data!)}");
+        Console.WriteLine($"Schedule created: {ScheduleLabel(scheduleResult.Data!, selectedBus)}");
         Pause();
     }
 
@@ -191,7 +190,7 @@ public class ConsoleMenu(
         if (schedules.Count == 0)
             Console.WriteLine("No schedules.");
         else
-            PrintList(schedules, ScheduleLabel);
+            PrintList(schedules, s => ScheduleLabel(s, busService.GetById(s.BusId)!));
         Pause();
     }
 
@@ -208,7 +207,7 @@ public class ConsoleMenu(
             return;
         }
 
-        var schedule = SelectFromList(schedules, ScheduleLabel, "Select schedule number: ");
+        var schedule = SelectFromList(schedules, s => ScheduleLabel(s, busService.GetById(s.BusId)!), "Select schedule number: ");
         if (schedule == null)
         {
             Console.WriteLine("Invalid selection.");
@@ -217,7 +216,8 @@ public class ConsoleMenu(
         }
 
         var bus = busService.GetById(schedule.BusId);
-        Console.WriteLine(ScheduleLabel(schedule));
+        if (bus != null)
+            Console.WriteLine(ScheduleLabel(schedule, bus));
         if (bus != null)
             Console.WriteLine($"Bus: {BusLabel(bus)}");
         if (bus != null)
@@ -261,7 +261,7 @@ public class ConsoleMenu(
         }
 
         Console.WriteLine("\nSchedules:");
-        var schedule = SelectFromList(schedules, ScheduleLabel, "Select schedule number: ");
+        var schedule = SelectFromList(schedules, s => ScheduleLabel(s, busService.GetById(s.BusId)!), "Select schedule number: ");
         if (schedule == null)
         {
             Console.WriteLine("Invalid selection.");
@@ -457,9 +457,9 @@ public class ConsoleMenu(
         $"Coach: {bus.CoachNumber} | Class: {bus.Classification} | " +
         $"Seats: {bus.TotalSeats}";
 
-    private static string ScheduleLabel(Schedule schedule) =>
+    private static string ScheduleLabel(Schedule schedule, Bus bus) =>
         $"{schedule.DepartureCity} -> {schedule.ArrivalCity} | " +
-        $"{schedule.DepartureDateTime:dd MMM yyyy HH:mm} | BDT {schedule.TicketPrice:F2}";
+        $"{schedule.DepartureDateTime:dd MMM yyyy HH:mm} | Bus Class: {bus.Classification} | BDT {schedule.TicketPrice:F2}";
 
     private static string TicketLabel(Ticket ticket) =>
         $"Seat {ticket.SeatNumber} | BDT {ticket.Price:F2} | Booked {ticket.BookingDateTime:dd MMM yyyy}";
