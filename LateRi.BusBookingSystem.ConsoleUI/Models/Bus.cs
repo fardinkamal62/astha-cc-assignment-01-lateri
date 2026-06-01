@@ -5,9 +5,9 @@ namespace LateRi.BusBookingSystem.ConsoleUI.Models;
 public class Bus : BaseEntity
 {
     public string BusId => Id;
-    public string CoachNumber { get; }
+    public string CoachName { get; }
     public BusClassification Classification { get; }
-    public int TotalSeats => (int)Classification;
+    public int TotalSeats { get; }
 
     public int SeatsPerRow => Classification == BusClassification.Economy ? 4 : 3;
     private char[] AllColumns => Classification == BusClassification.Economy ? ['A', 'B', 'C', 'D'] : ['A', 'B', 'C'];
@@ -19,10 +19,11 @@ public class Bus : BaseEntity
     private readonly HashSet<string> _reservedSeats = [];
     private readonly List<string> _allSeats;
 
-    public Bus(string coachNumber, BusClassification classification)
+    public Bus(string coachNumber, BusClassification classification, int totalSeats = 0)
     {
-        CoachNumber = coachNumber;
+        CoachName = coachNumber;
         Classification = classification;
+        TotalSeats = totalSeats > 0 ? totalSeats : (int)classification;
         _allSeats = GenerateAllSeats();
     }
 
@@ -58,7 +59,7 @@ public class Bus : BaseEntity
         _allSeats.Where(s => !_reservedSeats.Contains(s)).ToList();
 
     public override string GetSummary() =>
-        $"[{BusId}] Coach: {CoachNumber} | Class: {Classification} | " +
+        $"[{BusId}] Coach: {CoachName} | Class: {Classification} | " +
         $"Seats: {TotalSeats - _reservedSeats.Count}/{TotalSeats} available";
 
     public override string ToString() => GetSummary();

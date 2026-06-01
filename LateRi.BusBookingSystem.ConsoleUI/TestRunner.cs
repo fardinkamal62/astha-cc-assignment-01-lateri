@@ -433,7 +433,7 @@ public static class TestRunner
         // Assert
         Assert(result.IsSuccess, "Bus creation succeeds with valid coach number");
         Assert(result.Data != null, "Result contains Bus object");
-        AssertEqual("Shohagh Prestige", result.Data!.CoachNumber, "Coach number stored correctly");
+        AssertEqual("Shohagh Prestige", result.Data!.CoachName, "Coach name stored correctly");
         AssertEqual(BusClassification.Economy, result.Data.Classification, "Classification stored correctly");
         AssertEqual(40, result.Data.TotalSeats, "Bus has correct seat count");
         AssertEqual(1, repo.GetAll().Count, "Bus persisted in repository");

@@ -7,12 +7,12 @@ namespace LateRi.BusBookingSystem.ConsoleUI.Services;
 
 public class BusService(IBusRepository iBusRepository) : IBusService
 {
-    public Result<Bus> Create(string coachNumber, BusClassification classification)
+    public Result<Bus> Create(string coachName, BusClassification classification, int totalSeats = 0)
     {
-        if (string.IsNullOrWhiteSpace(coachNumber))
-            return Result<Bus>.Failure("CoachNumber is required.");
+        if (string.IsNullOrWhiteSpace(coachName))
+            return Result<Bus>.Failure("CoachName is required.");
 
-        var bus = new Bus(coachNumber, classification);
+        var bus = new Bus(coachName, classification, totalSeats);
         iBusRepository.Add(bus);
         return Result<Bus>.Success("Bus created.", bus);
     }

@@ -6,7 +6,7 @@ namespace LateRi.BusBookingSystem.ConsoleUI.Interfaces;
 
 public interface IBusService
 {
-    Result<Bus> Create(string coachNumber, BusClassification classification);
+    Result<Bus> Create(string coachName, BusClassification classification, int totalSeats = 0);
     IReadOnlyList<Bus> GetAll();
     Bus? GetById(string id);
 }
