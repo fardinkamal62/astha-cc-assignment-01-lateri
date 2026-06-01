@@ -10,7 +10,14 @@ public class InvoiceService(IInvoiceRepository invoiceRepository, IPaymentProces
 
     public Invoice Create(string ticketId, string userId, decimal amount)
     {
-        var invoice = new Invoice(ticketId, userId, amount);
+        var invoice = new Invoice([ticketId], userId, amount);
+        invoiceRepository.Add(invoice);
+        return invoice;
+    }
+
+    public Invoice Create(IReadOnlyList<string> ticketIds, string userId, decimal amount)
+    {
+        var invoice = new Invoice(ticketIds, userId, amount);
         invoiceRepository.Add(invoice);
         return invoice;
     }

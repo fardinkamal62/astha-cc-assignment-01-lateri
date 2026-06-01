@@ -59,27 +59,59 @@ public class BookingService(
         if (invoice.UserId != userId)
             return Result.Failure("Cancellation failed. Invoice does not belong to this user.");
 
-        var ticket = GetById(invoice.TicketId);
-        if (ticket == null) return Result.Failure("Ticket not found.");
-        if (ticket.UserId != userId)
-            return Result.Failure("Cancellation failed. Ticket does not belong to this user.");
-
         var cancelResult = invoiceService.CancelPay(invoiceId);
         if (cancelResult.IsFailure)
             return cancelResult;
 
-        var schedule = scheduleService.GetById(ticket.ScheduleId);
+        var schedule = scheduleService.GetById(invoice.TicketIds.Count > 0
+            ? ticketService.GetById(invoice.TicketIds[0])?.ScheduleId ?? "" : "");
         if (schedule == null) return Result.Failure("Schedule not found.");
 
         var bus = busService.GetById(schedule.BusId);
         if (bus == null) return Result.Failure("Bus not found.");
 
-        var seatFreed = bus.ClearReservedSeat(ticket.SeatNumber);
-        if (!seatFreed)
-            return Result.Failure($"Failed to clear reserved seat {ticket.SeatNumber}. It may not be reserved.");
-
-        ticketService.Remove(ticket.TicketId);
+        foreach (var ticketId in invoice.TicketIds)
+        {
+            var ticket = GetById(ticketId);
+            if (ticket == null) continue;
+            bus.ClearReservedSeat(ticket.SeatNumber);
+            ticketService.Remove(ticket.TicketId);
+        }
 
         return Result.Success("Cancellation successful!");
+    }
+
+    public Result<IReadOnlyList<Ticket>> BatchBook(string userId, string scheduleId, IReadOnlyList<string> seatCodes)
+    {
+        var user = userService.GetById(userId);
+        if (user == null) return Result<IReadOnlyList<Ticket>>.Failure("User not found.");
+
+        var schedule = scheduleService.GetById(scheduleId);
+        if (schedule == null) return Result<IReadOnlyList<Ticket>>.Failure("Schedule not found.");
+
+        var bus = busService.GetById(schedule.BusId);
+        if (bus == null) return Result<IReadOnlyList<Ticket>>.Failure("Bus not found.");
+
+        foreach (var seatCode in seatCodes)
+        {
+            if (!bus.IsValidSeat(seatCode))
+                return Result<IReadOnlyList<Ticket>>.Failure($"Invalid seat code '{seatCode}'.");
+            if (!bus.IsSeatAvailable(seatCode))
+                return Result<IReadOnlyList<Ticket>>.Failure($"Seat {seatCode} is already reserved.");
+        }
+
+        var tickets = new List<Ticket>();
+        foreach (var seatCode in seatCodes)
+        {
+            bus.ReserveSeat(seatCode);
+            var ticket = new Ticket(userId, scheduleId, bus.BusId, seatCode, schedule.TicketPrice);
+            ticketService.Add(ticket);
+            tickets.Add(ticket);
+        }
+
+        var totalAmount = tickets.Sum(t => t.Price);
+        invoiceService.Create(tickets.Select(t => t.TicketId).ToList(), userId, totalAmount);
+
+        return Result<IReadOnlyList<Ticket>>.Success($"{tickets.Count} ticket(s) booked successfully!", tickets);
     }
 }

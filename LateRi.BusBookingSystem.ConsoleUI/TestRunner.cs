@@ -1092,7 +1092,7 @@ public static class TestRunner
     private static void Invoice_Create_DefaultStatusPending()
     {
         // Arrange & Act
-        var invoice = new Invoice("TKT001", "USR001", 800m);
+        var invoice = new Invoice(["TKT001"], "USR001", 800m);
 
         // Assert
         AssertEqual(PaymentStatus.Unpaid, invoice.Status, "New invoice status is Unpaid");
@@ -1239,7 +1239,7 @@ public static class TestRunner
     private static void Invoice_Properties_StoredCorrectly()
     {
         // Arrange & Act
-        var invoice = new Invoice("TKT-XYZ", "USR-ABC", 1200m);
+        var invoice = new Invoice(["TKT-XYZ"], "USR-ABC", 1200m);
 
         // Assert
         AssertEqual("TKT-XYZ", invoice.TicketId, "TicketId stored correctly");
@@ -1364,7 +1364,7 @@ public static class TestRunner
 
     private static void OOP_Invoice_ExtendsBaseEntity()
     {
-        var invoice = new Invoice("TID", "UID", 100m);
+        var invoice = new Invoice(["TID"], "UID", 100m);
         Assert(invoice is BaseEntity, "Invoice extends BaseEntity (INHERITANCE)");
     }
 
@@ -1378,7 +1378,7 @@ public static class TestRunner
             new Bus("TEST", BusClassification.Economy),
             new Schedule("BID", "A", "B", DateTime.Now, 100m),
             new Ticket("UID", "SID", "BID", "A1", 100m),
-            new Invoice("TID", "UID", 100m)
+            new Invoice(["TID"], "UID", 100m)
         ];
 
         // Assert — all override GetSummary() (polymorphism in action)

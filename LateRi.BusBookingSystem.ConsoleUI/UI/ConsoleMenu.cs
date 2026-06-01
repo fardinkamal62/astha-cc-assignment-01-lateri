@@ -297,21 +297,26 @@ public class ConsoleMenu(
 
         ConsoleHelper.WriteInfo($"Available seats ({available.Count}/{bus.TotalSeats}):");
         SeatLayoutRenderer.Render(bus);
-        ConsoleHelper.WritePrompt("Choose a seat code (e.g., A1): ");
-        var seatCode = Console.ReadLine()?.Trim().ToUpper();
-        if (string.IsNullOrWhiteSpace(seatCode) || !available.Contains(seatCode))
+        ConsoleHelper.WritePrompt("Choose seat(s) (comma separated, e.g. A1, B3) : ");
+        var seatInput = Console.ReadLine();
+        var seatCodes = seatInput?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(s => s.ToUpper())
+            .ToList() ?? [];
+
+        if (seatCodes.Count == 0)
         {
-            ConsoleHelper.WriteError("Invalid or unavailable seat.");
+            ConsoleHelper.WriteError("No seats specified.");
             ConsoleHelper.Pause();
             return;
         }
 
-        var result = bookingService.Book(user.UserId, schedule.ScheduleId, seatCode);
+        var result = bookingService.BatchBook(user.UserId, schedule.ScheduleId, seatCodes);
         if (result.IsSuccess)
         {
             ConsoleHelper.WriteSuccess(result.Message);
-            ConsoleHelper.WriteSuccess($"Ticket booked: {TicketLabel(result.Data!)}");
-            ConsoleHelper.WriteInfo("Invoice auto-generated.");
+            foreach (var ticket in result.Data!)
+                ConsoleHelper.WriteSuccess($"  Seat {ticket.SeatNumber} — BDT {ticket.Price:F2} | Booked {ticket.BookingDateTime:dd MMM yyyy}");
+            ConsoleHelper.WriteInfo("Single invoice auto-generated for all tickets.");
         }
         else
         {

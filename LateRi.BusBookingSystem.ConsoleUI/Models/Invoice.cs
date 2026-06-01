@@ -2,10 +2,11 @@ using LateRi.BusBookingSystem.ConsoleUI.Enums;
 
 namespace LateRi.BusBookingSystem.ConsoleUI.Models;
 
-public class Invoice(string ticketId, string userId, decimal amountDue) : BaseEntity
+public class Invoice(IReadOnlyList<string> ticketIds, string userId, decimal amountDue) : BaseEntity
 {
     public string InvoiceId => Id;
-    public string TicketId { get; private set; } = ticketId;
+    public IReadOnlyList<string> TicketIds { get; private set; } = ticketIds;
+    public string TicketId => TicketIds.FirstOrDefault() ?? string.Empty;
     public string UserId { get; private set; } = userId;
     public decimal AmountDue { get; private set; } = amountDue;
     public DateTimeOffset GeneratedDate { get; private set; } = DateTimeOffset.UtcNow;
@@ -20,7 +21,7 @@ public class Invoice(string ticketId, string userId, decimal amountDue) : BaseEn
     public void MarkCancelled() => MarkAsCancelled();
 
     public override string GetSummary() =>
-        $"[{InvoiceId}] Ticket: {TicketId} | BDT {AmountDue:F2} | " +
+        $"[{InvoiceId}] Tickets: {string.Join(", ", TicketIds)} | BDT {AmountDue:F2} | " +
         $"Status: {Status} | Date: {GeneratedDate:dd MMM yyyy}";
 
     public override string ToString() => GetSummary();
