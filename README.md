@@ -1,24 +1,47 @@
-# LateRi Bus Booking System
-<sub>by LateRi (Astha.IT CodeCamp — ServerCamp, Assignment 1)</sub>
+<div align="center"><h1>LateRi</h1></div>
+<div align="center">CLI Bus Booking System</div>
+<div align="center" style="color: grey"><sub>Version: 1.3.0</sub></div>
 
-<sub>Version 1.3.0</sub>
 
 A C# console application for bus ticket booking and billing, built as **Assignment 1** of the Astha.IT CodeCamp — ServerCamp.
 
 ---
 
+## Build & Run Instructions
+
+### Clone the repository and navigate to the project directory:
+```shell
+git clone https://github.com/fardinkamal62/astha-cc-assignment-01-lateri.git
+cd astha-cc-assignment-01-lateri/LateRi.BusBookingSystem
+```
+
+### Run the Application
+```shell
+dotnet run --project LateRi.BusBookingSystem.ConsoleUI
+```
+
+### Run Tests (Optional)
+
+```shell
+dotnet run --project LateRi.BusBookingSystem.ConsoleUI -- test
+```
+
+---
+
+# Project Overview
+
 ## 1. What Was Required
 
 Design and implement a Bus Ticket Booking & Billing System using C# and OOP, covering:
 
-| Module | Key Requirements |
-|--------|-----------------|
-| **User Management** | Create users (ID, name, mobile, email); one user may book many tickets |
-| **Bus Management** | Fleet with ID, coach number, classification (Business/Economy), seat capacity by class |
-| **Schedule Management** | Multiple schedules per bus; departure/arrival city, datetime, price; linked to a bus |
+| Module | Key Requirements                                                                                                             |
+|--------|------------------------------------------------------------------------------------------------------------------------------|
+| **User Management** | Create users (ID, name, mobile, email); one user may book many tickets                                                       |
+| **Bus Management** | Fleet with ID, coach number, classification (Business/Economy), seat capacity by class                                       |
+| **Schedule Management** | Multiple schedules per bus; departure/arrival city, datetime, price; linked to a bus                                         |
 | **Ticket Booking** | Browse schedules → pick a seat → book; validate seat range; prevent duplicate reservations; auto-generate invoice on payment |
-| **Invoice & Payment** | Invoice with ID, ticket ID, user ID, amount, date, status; view invoices; pay outstanding ones |
-| **Viewing & Operations** | All CRUD: users, buses, schedules, schedule details, tickets, invoices, payments |
+| **Invoice & Payment** | Invoice with ID, ticket ID, user ID, amount, date, status; view invoices; pay outstanding ones                               |
+| **Viewing & Operations** | Users, buses, schedules, schedule details, tickets, invoices, payments                                                       |
 
 **Technical requirements:** C# Console Application, all 4 OOP pillars, SOLID principles, entity classes with properties and methods.
 
@@ -61,14 +84,14 @@ LateRi.BusBookingSystem.ConsoleUI/
 | **ISP** | Generic `IRepository<T>` base + specialized interfaces add only what's needed |
 | **DIP** | Services receive interfaces via constructor injection; no `new Repository()` inside services |
 
-### Bonus Features
+### Extra Features
 
 - **223 automated tests** across 10 domains (BaseEntity, User, Bus, Seat Ops, Schedule, Booking, Invoice, Cancellation, OOP Verification, E2E)
 - **Batch booking** — multi-seat booking in one operation with a single invoice
 - **Booking cancellation** — cancels invoice, removes ticket, frees the seat
 - **SeatLayoutRenderer** — visual bus layout (green = available, red = taken)
 - **Result<T> pattern** — consistent success/failure propagation through the entire stack
-- **Seed data** — 3 users, 2 buses (Business + Economy), 3 schedules pre-loaded
+- **Seed data** — 3 users, 2 buses (Business + Economy), 3 schedules preloaded
 
 ### All 11 Required Operations
 
@@ -97,7 +120,7 @@ LateRi.BusBookingSystem.ConsoleUI/
 - Generic interfaces (`IRepository<T>`) for reusable data access contracts
 
 ### OOP & Design
-- Abstract classes define common behaviour + force subclasses to implement specifics
+- Abstract classes define common behavior + force subclasses to implement specifics
 - Polymorphic `GetSummary()` + `Display()` lets callers treat all entities uniformly
 - Interface segregation prevents fat interfaces — each repo interface adds only relevant methods
 - Dependency injection through constructor params (no service locator, no `new` in services)
@@ -126,17 +149,3 @@ LateRi.BusBookingSystem.ConsoleUI/
 | **Concurrency** | No thread safety — `HashSet`/`Dictionary` ops are not locked. Multi-user scenarios could cause race conditions. |
 | **UI Input** | Console input is not validated for type mismatches (e.g., letter in price field — handled via `TryParse` but no retry loop). |
 | **Test Coverage** | No edge-case tests for concurrent operations, null arguments, or extreme values. |
-
----
-
-## Run
-
-```bash
-dotnet run --project LateRi.BusBookingSystem.ConsoleUI
-```
-
-### Run Tests
-
-```bash
-dotnet run --project LateRi.BusBookingSystem.ConsoleUI -- test
-```
