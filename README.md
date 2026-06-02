@@ -1,6 +1,6 @@
 <div align="center"><h1>LateRi</h1></div>
 <div align="center">CLI Bus Booking System</div>
-<div align="center" style="color: grey"><sub>Version: 1.3.0</sub></div>
+<div align="center" style="color: grey"><sub>Version: 1.4.0</sub></div>
 
 
 A C# console application for bus ticket booking and billing, built as **Assignment 1** of the Astha.IT CodeCamp — ServerCamp.

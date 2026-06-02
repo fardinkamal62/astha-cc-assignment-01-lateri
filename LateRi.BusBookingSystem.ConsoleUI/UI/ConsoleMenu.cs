@@ -37,7 +37,13 @@ public class ConsoleMenu(
             Console.WriteLine();
             ConsoleHelper.WritePrompt("Choose an option: ");
 
-            var choice = Console.ReadLine();
+            string? choice = Console.ReadLine()?.Trim();
+            if (string.IsNullOrEmpty(choice))
+            {
+                ConsoleHelper.WriteError("No option entered. Press any key to try again.");
+                Console.ReadKey();
+                continue;
+            }
 
             switch (choice)
             {
@@ -93,7 +99,9 @@ public class ConsoleMenu(
         if (users.Count == 0)
             ConsoleHelper.WriteWarning("No users registered.");
         else
-            ConsoleHelper.PrintList(users, UserLabel);
+            ConsoleHelper.PrintTable(users,
+                ["#", "Name", "Mobile", "Email"],
+                (u, i) => [i.ToString(), u.Name, u.Mobile, u.Email]);
         ConsoleHelper.Pause();
     }
 
@@ -142,7 +150,9 @@ public class ConsoleMenu(
         if (buses.Count == 0)
             ConsoleHelper.WriteWarning("No buses in fleet.");
         else
-            ConsoleHelper.PrintList(buses, BusLabel);
+            ConsoleHelper.PrintTable(buses,
+                ["#", "Coach", "Class", "Seats"],
+                (b, i) => [i.ToString(), b.CoachName, b.Classification.ToString(), b.TotalSeats.ToString()]);
         ConsoleHelper.Pause();
     }
 
@@ -207,7 +217,16 @@ public class ConsoleMenu(
         if (schedules.Count == 0)
             ConsoleHelper.WriteWarning("No schedules.");
         else
-            ConsoleHelper.PrintList(schedules, s => ScheduleLabel(s, busService.GetById(s.BusId)!));
+            ConsoleHelper.PrintTable(schedules,
+                ["#", "Route", "Departure", "Bus Class", "Price"],
+                (s, i) =>
+                {
+                    var bus = busService.GetById(s.BusId);
+                    return [i.ToString(), $"{s.DepartureCity} → {s.ArrivalCity}",
+                        $"{s.DepartureDateTime:dd MMM yyyy HH:mm}",
+                        bus?.Classification.ToString() ?? "N/A",
+                        $"BDT {s.TicketPrice:F2}"];
+                });
         ConsoleHelper.Pause();
     }
 
@@ -224,7 +243,16 @@ public class ConsoleMenu(
             return;
         }
 
-        var schedule = ConsoleHelper.SelectFromList(schedules, s => ScheduleLabel(s, busService.GetById(s.BusId)!), "Select schedule number: ");
+        var schedule = ConsoleHelper.SelectFromTable(schedules,
+            ["#", "Route", "Departure", "Bus Class", "Price"],
+            (s, i) =>
+            {
+                var b = busService.GetById(s.BusId);
+                return [i.ToString(), $"{s.DepartureCity} → {s.ArrivalCity}",
+                    $"{s.DepartureDateTime:dd MMM yyyy HH:mm}",
+                    b?.Classification.ToString() ?? "N/A",
+                    $"BDT {s.TicketPrice:F2}"];
+            }, "Select schedule number: ");
         if (schedule == null)
         {
             ConsoleHelper.WriteError("Invalid selection.");
@@ -235,10 +263,14 @@ public class ConsoleMenu(
         var bus = busService.GetById(schedule.BusId);
         if (bus != null)
         {
-            ConsoleHelper.WriteInfo(ScheduleLabel(schedule, bus));
-            ConsoleHelper.WriteInfo($"Bus: {BusLabel(bus)}");
-            ConsoleHelper.WriteInfo(
-                $"Available seats: {bookingService.GetAvailableSeats(schedule.ScheduleId).Count}/{bus.TotalSeats}");
+            ConsoleHelper.PrintCard("Schedule Info",
+                ("Route", $"{schedule.DepartureCity} → {schedule.ArrivalCity}"),
+                ("Departure", $"{schedule.DepartureDateTime:dd MMM yyyy HH:mm}"),
+                ("Bus", bus.CoachName),
+                ("Class", bus.Classification.ToString()),
+                ("Seats", bus.TotalSeats.ToString()),
+                ("Price", $"BDT {schedule.TicketPrice:F2}"),
+                ("Available", $"{bookingService.GetAvailableSeats(schedule.ScheduleId).Count}/{bus.TotalSeats} seats"));
             SeatLayoutRenderer.Render(bus);
         }
         ConsoleHelper.Pause();
@@ -266,8 +298,10 @@ public class ConsoleMenu(
             return;
         }
 
-        ConsoleHelper.WriteInfo("Users:");
-        var user = ConsoleHelper.SelectFromList(users, UserLabel, "Select user number: ");
+        var user = ConsoleHelper.SelectFromTable(users,
+            ["#", "Name", "Mobile", "Email"],
+            (u, i) => [i.ToString(), u.Name, u.Mobile, u.Email],
+            "Select user number: ");
         if (user == null)
         {
             ConsoleHelper.WriteError("Invalid selection.");
@@ -276,8 +310,21 @@ public class ConsoleMenu(
         }
 
         Console.WriteLine();
-        ConsoleHelper.WriteInfo("Schedules:");
-        var schedule = ConsoleHelper.SelectFromList(schedules, s => ScheduleLabel(s, busService.GetById(s.BusId)!), "Select schedule number: ");
+        ConsoleHelper.PrintCard("Passenger",
+            ("Name", user.Name),
+            ("Mobile", user.Mobile),
+            ("Email", user.Email));
+
+        var schedule = ConsoleHelper.SelectFromTable(schedules,
+            ["#", "Route", "Departure", "Bus Class", "Price"],
+            (s, i) =>
+            {
+                var b = busService.GetById(s.BusId);
+                return [i.ToString(), $"{s.DepartureCity} → {s.ArrivalCity}",
+                    $"{s.DepartureDateTime:dd MMM yyyy HH:mm}",
+                    b?.Classification.ToString() ?? "N/A",
+                    $"BDT {s.TicketPrice:F2}"];
+            }, "Select schedule number: ");
         if (schedule == null)
         {
             ConsoleHelper.WriteError("Invalid selection.");
@@ -292,6 +339,12 @@ public class ConsoleMenu(
             ConsoleHelper.Pause();
             return;
         }
+
+        ConsoleHelper.PrintCard("Trip",
+            ("Route", $"{schedule.DepartureCity} → {schedule.ArrivalCity}"),
+            ("Departure", $"{schedule.DepartureDateTime:dd MMM yyyy HH:mm}"),
+            ("Bus", $"{bus.CoachName}  ·  {bus.Classification}"),
+            ("Price", $"BDT {schedule.TicketPrice:F2} per seat"));
 
         var available = bookingService.GetAvailableSeats(schedule.ScheduleId);
 
@@ -315,7 +368,7 @@ public class ConsoleMenu(
         {
             ConsoleHelper.WriteSuccess(result.Message);
             foreach (var ticket in result.Data!)
-                ConsoleHelper.WriteSuccess($"  Seat {ticket.SeatNumber} — BDT {ticket.Price:F2} | Booked {ticket.BookingDateTime:dd MMM yyyy}");
+                ConsoleHelper.WriteSuccess($"  Seat {ticket.SeatNumber}  ·  BDT {ticket.Price:F2}  ·  Booked {ticket.BookingDateTime:dd MMM yyyy}");
             ConsoleHelper.WriteInfo("Single invoice auto-generated for all tickets.");
         }
         else
@@ -338,7 +391,10 @@ public class ConsoleMenu(
             return;
         }
 
-        var user = ConsoleHelper.SelectFromList(users, UserLabel, "Select user number: ");
+        var user = ConsoleHelper.SelectFromTable(users,
+            ["#", "Name", "Mobile", "Email"],
+            (u, i) => [i.ToString(), u.Name, u.Mobile, u.Email],
+            "Select user number: ");
         if (user == null)
         {
             ConsoleHelper.WriteError("Invalid selection.");
@@ -346,11 +402,21 @@ public class ConsoleMenu(
             return;
         }
 
+        Console.WriteLine();
+        ConsoleHelper.PrintCard("Selected User",
+            ("Name", user.Name),
+            ("Mobile", user.Mobile),
+            ("Email", user.Email));
+
         var invoices = invoiceService.GetByUser(user.UserId);
         if (invoices.Count == 0)
             ConsoleHelper.WriteWarning("No invoices for this user.");
         else
-            ConsoleHelper.PrintList(invoices, InvoiceLabel);
+            ConsoleHelper.PrintTable(invoices,
+                ["#", "Invoice ID", "Tickets", "Amount", "Status", "Date"],
+                (inv, i) => [i.ToString(), inv.InvoiceId, string.Join(", ", inv.TicketIds),
+                    $"BDT {inv.AmountDue:F2}", inv.Status.ToString(),
+                    inv.GeneratedDate.ToString("dd MMM yyyy")]);
 
         ConsoleHelper.Pause();
     }
@@ -367,13 +433,22 @@ public class ConsoleMenu(
             return;
         }
 
-        var user = ConsoleHelper.SelectFromList(users, UserLabel, "Select user number: ");
+        var user = ConsoleHelper.SelectFromTable(users,
+            ["#", "Name", "Mobile", "Email"],
+            (u, i) => [i.ToString(), u.Name, u.Mobile, u.Email],
+            "Select user number: ");
         if (user == null)
         {
             ConsoleHelper.WriteError("Invalid selection.");
             ConsoleHelper.Pause();
             return;
         }
+
+        Console.WriteLine();
+        ConsoleHelper.PrintCard("Selected User",
+            ("Name", user.Name),
+            ("Mobile", user.Mobile),
+            ("Email", user.Email));
 
         var unpaid = invoiceService.GetUnpaidByUser(user.UserId);
         if (unpaid.Count == 0)
@@ -383,29 +458,39 @@ public class ConsoleMenu(
             return;
         }
 
-        ConsoleHelper.WriteInfo("Unpaid invoices:");
-        var invoice = ConsoleHelper.SelectFromList(unpaid, InvoiceLabel, "Select invoice number: ");
-        if (invoice == null)
+        ConsoleHelper.PrintTable(unpaid,
+            ["#", "Invoice", "Amount", "Status", "Date"],
+            (inv, i) => [i.ToString(), inv.InvoiceId, $"BDT {inv.AmountDue:F2}",
+                inv.Status.ToString(), inv.GeneratedDate.ToString("dd MMM yyyy")]);
+
+        ConsoleHelper.WritePrompt("Select invoice number: ");
+        if (!int.TryParse(Console.ReadLine(), out var choice) || choice < 1 || choice > unpaid.Count)
+        {
+            ConsoleHelper.WriteError("Invalid selection.");
+            ConsoleHelper.Pause();
+            return;
+        }
+        var invoice = unpaid[choice - 1];
+
+        ConsoleHelper.PrintCard("Invoice",
+            ("ID", invoice.InvoiceId),
+            ("Tickets", string.Join(", ", invoice.TicketIds)),
+            ("Amount", $"BDT {invoice.AmountDue:F2}"),
+            ("Date", invoice.GeneratedDate.ToString("dd MMM yyyy")));
+
+        IReadOnlyList<string> actions = ["Pay", "Cancel"];
+        var action = ConsoleHelper.SelectFromList(actions, c => c, "Choose action: ");
+        if (action == null)
         {
             ConsoleHelper.WriteError("Invalid selection.");
             ConsoleHelper.Pause();
             return;
         }
 
-        IReadOnlyList<string> choices = ["Pay", "Cancel"];
-        var choice = ConsoleHelper.SelectFromList(choices, c => c, "Choose action: ");
-        if (choice == null)
-        {
-            ConsoleHelper.WriteError("Invalid selection.");
-            ConsoleHelper.Pause();
-            return;
-        }
-
-        if (choice == "Cancel")
+        if (action == "Cancel")
         {
             var result = bookingService.CancelBooking(user.UserId, invoice.Id);
             ConsoleHelper.WriteInfo(result.Message);
-
             ConsoleHelper.Pause();
             return;
         }
@@ -431,7 +516,10 @@ public class ConsoleMenu(
             return;
         }
 
-        var user = ConsoleHelper.SelectFromList(users, UserLabel, "Select user number: ");
+        var user = ConsoleHelper.SelectFromTable(users,
+            ["#", "Name", "Mobile", "Email"],
+            (u, i) => [i.ToString(), u.Name, u.Mobile, u.Email],
+            "Select user number: ");
         if (user == null)
         {
             ConsoleHelper.WriteError("Invalid selection.");
@@ -439,29 +527,37 @@ public class ConsoleMenu(
             return;
         }
 
+        Console.WriteLine();
+        ConsoleHelper.PrintCard("Selected User",
+            ("Name", user.Name),
+            ("Mobile", user.Mobile),
+            ("Email", user.Email));
+
         var tickets = bookingService.GetByUser(user.UserId);
         if (tickets.Count == 0)
             ConsoleHelper.WriteWarning("No tickets for this user.");
         else
-            ConsoleHelper.PrintList(tickets, TicketLabel);
+            ConsoleHelper.PrintTable(tickets,
+                ["#", "Seat", "Schedule", "Price", "Booked On"],
+                (t, i) => [i.ToString(), t.SeatNumber, t.BookingDateTime.ToString("dd MMM yyyy HH:mm"),
+                    $"BDT {t.Price:F2}", t.BookingDateTime.ToString("dd MMM yyyy")]);
 
         ConsoleHelper.Pause();
     }
 
     private static string UserLabel(User user) =>
-        $"{user.Name} | {user.Mobile} | {user.Email}";
+        $"{user.Name}  ·  {user.Mobile}  ·  {user.Email}";
 
     private static string BusLabel(Bus bus) =>
-        $"Coach: {bus.CoachName} | Class: {bus.Classification} | " +
-        $"Seats: {bus.TotalSeats}";
+        $"{bus.CoachName}  ·  {bus.Classification}  ·  {bus.TotalSeats} seats";
 
     private static string ScheduleLabel(Schedule schedule, Bus bus) =>
-        $"{schedule.DepartureCity} -> {schedule.ArrivalCity} | " +
-        $"{schedule.DepartureDateTime:dd MMM yyyy HH:mm} | Bus Class: {bus.Classification} | BDT {schedule.TicketPrice:F2}";
+        $"{schedule.DepartureCity} → {schedule.ArrivalCity}  ·  " +
+        $"{schedule.DepartureDateTime:dd MMM yyyy HH:mm}  ·  BDT {schedule.TicketPrice:F2}";
 
     private static string TicketLabel(Ticket ticket) =>
-        $"Seat {ticket.SeatNumber} | BDT {ticket.Price:F2} | Booked {ticket.BookingDateTime:dd MMM yyyy}";
+        $"Seat {ticket.SeatNumber}  ·  BDT {ticket.Price:F2}  ·  {ticket.BookingDateTime:dd MMM yyyy}";
 
     private static string InvoiceLabel(Invoice invoice) =>
-        $"BDT {invoice.AmountDue:F2} | {invoice.Status} | {invoice.GeneratedDate:dd MMM yyyy}";
+        $"BDT {invoice.AmountDue:F2}  ·  {invoice.Status}  ·  {invoice.GeneratedDate:dd MMM yyyy}";
 }
