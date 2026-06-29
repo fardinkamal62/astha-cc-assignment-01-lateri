@@ -111,7 +111,29 @@ LateRi.BusBookingSystem.ConsoleUI/
 
 ---
 
-## 3. Learnings
+## 3. Assignment Review Result (50/50)
+
+The assignment was reviewed with a **perfect score of 50/50** across all evaluated criteria:
+
+| Category | Score | Highlights |
+|----------|-------|------------|
+| **User Management** | 5/5 | `BaseEntity` inheritance, GUID IDs, regex validation for email, 11-digit mobile number, and name length. Bookings are tracked through the repository. |
+| **Bus Management** | 5/5 | Bus classification, capacity, seat generation, and reserved/available seats managed through an encapsulated `HashSet`. |
+| **Schedule Management** | 5/5 | User-entered date and time, positive price validation, and bus association validation implemented correctly. |
+| **Ticket Booking** | 10/10 | Seat layout display, seat code and availability validation, duplicate booking prevention, batch booking, and automatic ticket and invoice generation implemented. Seats are reserved at booking and released on cancellation. |
+| **Invoice & Payment** | 10/10 | Automatic invoice generation with all required fields, support for multiple tickets per invoice, unpaid invoice filtering, strategy-based payment processing, already-paid validation, and cancellation implemented correctly. |
+| **OOP & SOLID** | 10/10 | Excellent use of encapsulation, inheritance, abstraction, and polymorphism. Strong adherence to SRP, OCP, ISP, and DIP through constructor dependency injection, strategy pattern, and a generic repository. |
+| **Code Quality & UI** | 5/5 | Modern C# practices, `Result` pattern for error handling, robust input validation without crashes, colored tables and seat map, test runner, and a complete solution structure. |
+| **Total** | **50/50** | |
+
+### Reviewer Notes
+
+- **Clever but unconventional:** Capacity is encoded as enum values rather than raw numbers — noted as a minor stylistic choice.
+- **Reasonable design choice:** Seats are reserved at booking and released on cancellation.
+
+---
+
+## 4. Learnings
 
 ### C# & Language Features
 - Primary constructors — concise class declarations with constructor params auto-captured
@@ -134,7 +156,7 @@ LateRi.BusBookingSystem.ConsoleUI/
 
 ---
 
-## 4. Shortcomings & Future Improvements
+## 5. Shortcomings & Future Improvements
 
 ### Current Limitations
 
